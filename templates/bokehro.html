@@ -91,18 +91,21 @@
     </div>
   </section><!-- End Hero -->
 
-  <main id="main">
+<main id="main">
 
-    <!-- ======= Services Section ======= -->
+    <!-- ======= Plot Section ======= -->
     <section id="plot" class="services section-bg">
       <div class="container" data-aos="fade-up">
 
         <div class="section-title">
             <h2>Plot</h2>
-            <h3>{{ item_name }}</h3>
             <p>
-                <input class="form-control" list="item-list" id="item-select" placeholder="Type to search...">
+                <input class="form-control" list="item-list" id="item-select" placeholder="Type to search..." size="50" />
                 <datalist id="item-list"></datalist>
+            </p>
+            <p>
+                <input type="checkbox" id="item-permit-cards-enchants" value="true" />
+                <label for="item-permit-cards-enchants">カード刺し/エンチャント有りも含める</label>
             </p>
         </div>
 
@@ -111,10 +114,10 @@
         </div>
       </div>
     </section><!-- End Sevices Section -->
-  </main><!-- End #main -->
+</main><!-- End #main -->
 
-  <!-- ======= Footer ======= -->
-  <footer id="footer">
+<!-- ======= Footer ======= -->
+<footer id="footer">
 
     <div class="footer-top">
       <div class="container">
@@ -157,7 +160,7 @@
         <a href="https://twitter.com/_m10i" class="twitter"><i class="bx bxl-twitter"></i></a>
       </div>
     </div>
-  </footer><!-- End Footer -->
+</footer><!-- End Footer -->
 
     <div id="preloader"></div>
     <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
@@ -178,11 +181,18 @@
     <script type="text/javascript">
         var item_select = document.getElementById('item-select');
         var item_list = document.getElementById('item-list');
+        var item_permit = document.getElementById('item-permit-cards-enchants');
 
-        function set_item(event) {
-            var item_name = event.currentTarget.value;
+        function plot_item(event) {
+            var item_name = item_select.value;
             if (item_name != undefined && item_name != "") {
-                location.href="?name=" + item_name + "#plot"
+                var request_params="?name=" + item_name
+                if (item_permit != undefined && item_permit.checked) {
+                    request_params += "&cards=true&enchants=true"
+                }
+                request_params += "#plot"
+
+                location.href=request_params
             }
         }
 
@@ -203,7 +213,13 @@
                         item_list.appendChild(option);
                     });
                     item_select.placeholder = "アイテム名を入力してください";
-                    item_select.addEventListener("change", set_item);
+                    item_select.value = "{{item_name}}";
+                    item_select.addEventListener("change", plot_item);
+                    item_permit.addEventListener("change", plot_item);
+
+                    if ("{{permit_cards}}" == "True" || "{{permit_enchants}}" == "True") {
+                        item_permit.checked = true;
+                    }
                 } else {
                     // An error occured :(
                     item_select.placeholder = "アイテムリストが取得失敗しました :(";
