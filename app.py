@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
-import os
-
 import MySQLdb
 import pandas as pd
 from bokeh.embed import components
 from bokeh.models import HoverTool
 from bokeh.plotting import figure
 from bokeh.resources import INLINE as resources_inline
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, jsonify, render_template, request
 from jsonc_parser.parser import JsoncParser
 
 app = Flask(__name__, template_folder='templates')
@@ -70,18 +68,21 @@ def bokehro():
         finally:
             if connection is not None:
                 connection.close()
+
         df['color']=[smelting_color_map[x] for x in df['smelting']]
 
         # figure作成
-        plot = figure(title=item_name,
-            x_axis_label = '日付',
-            y_axis_label = 'MZeny',
+        plot = figure(
+            title=item_name,
+            x_axis_label='日付',
+            y_axis_label='価格(Mz)',
             x_axis_type='datetime',
-            tools=['pan','wheel_zoom','zoom_in','zoom_out','save','reset'],
+            tools=['box_zoom','reset','save'],
             sizing_mode='stretch_both')
 
         # ベースにデータを配置
-        plot.circle(source=df,
+        plot.circle(
+            source=df,
             x='datetime',
             y='unit_cost',
             color='color',
@@ -92,6 +93,7 @@ def bokehro():
             formatters={"@datetime":"datetime"}
         )
         plot.add_tools(hover)
+
         plot_script, plot_div = components(plot)
 
     # grab the static resources
@@ -100,7 +102,7 @@ def bokehro():
 
     # render template
     html = render_template(
-        "bokeh.html",
+        "bokehro.html",
         item_name=item_name,
         plot_script=plot_script,
         plot_div=plot_div,
