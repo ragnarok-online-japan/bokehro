@@ -1,0 +1,15 @@
+[Unit]
+Description=bokeh-ro
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+Restart=always
+WorkingDirectory=/opt/bokeh-ro
+ExecStart=/usr/bin/python3 -u app.py
+StandardOutput=null
+
+[Install]
+WantedBy=default.target
