@@ -21,7 +21,7 @@ except Exception as ex:
 
 @app.route('/bokehro', methods=['GET'])
 def bokehro():
-    item_name: str        = request.args.get("name", default=None)
+    item_name: str        = request.args.get("name", default="")
     permit_cards: bool    = request.args.get("cards", default=False, type=bool)
     permit_enchants: bool = request.args.get("enchants", default=False, type=bool)
 
@@ -91,6 +91,7 @@ def bokehro():
             x='datetime',
             y='unit_cost',
             color='color',
+            size=8,
             fill_alpha=0.5)
 
         hover = HoverTool(
