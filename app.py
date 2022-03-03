@@ -21,9 +21,10 @@ except Exception as ex:
 
 @app.route('/bokehro', methods=['GET'])
 def bokehro():
-    item_name: str        = request.args.get("name", default="")
-    permit_cards: bool    = request.args.get("cards", default=False, type=bool)
-    permit_enchants: bool = request.args.get("enchants", default=False, type=bool)
+    item_name: str           = request.args.get("name", default="")
+    permit_cards: bool       = request.args.get("cards", default=False, type=bool)
+    permit_enchants: bool    = request.args.get("enchants", default=False, type=bool)
+    smelting_list: list[int] = request.args.getlist("smelting[]", type=int)
 
     # init
     connection = None
@@ -54,7 +55,7 @@ def bokehro():
             connection.autocommit(False)
 
             query_string: str = """
-                SELECT datetime, unit_cost/1000000 AS 'unit_cost', smelting, cards, enchants
+                SELECT id, datetime, unit_cost/1000000 AS 'unit_cost', smelting, cards, enchants
                 FROM item_detail_tbl
                 WHERE item_name = %(item_name)s
             """
@@ -63,6 +64,10 @@ def bokehro():
                 query_string += " AND cards = '[]'"
             if permit_enchants is False:
                 query_string += " AND enchants = '[]'"
+
+            smelting_list = [value for value in smelting_list if isinstance(value, int) == True]
+            if len(smelting_list) > 0:
+                query_string += " AND smelting IN({:s})".format(",".join(map(str, smelting_list)))
 
             query_string += " ORDER BY 1 ASC, id ASC;"
 
@@ -95,7 +100,14 @@ def bokehro():
             fill_alpha=0.5)
 
         hover = HoverTool(
-            tooltips=[("日時","@datetime{%F}"),("価格","@unit_cost M"),("精錬値","@smelting"),("カード","@cards"),("エンチャント","@enchants")],
+            tooltips=[
+                ("ID", "@id"),
+                ("日時","@datetime{%F %R}"),
+                ("価格","@unit_cost M"),
+                ("精錬値","@smelting"),
+                ("カード","@cards"),
+                ("エンチャント","@enchants")
+                ],
             formatters={"@datetime":"datetime"}
         )
         plot.add_tools(hover)
@@ -112,6 +124,7 @@ def bokehro():
         item_name=item_name,
         permit_cards=permit_cards,
         permit_enchants=permit_enchants,
+        smelting_list=smelting_list,
         plot_script=plot_script,
         plot_div=plot_div,
         js_resources=js_resources,

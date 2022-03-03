@@ -104,11 +104,31 @@
                 <datalist id="item-list"></datalist>
             </p>
             <p>
-                <input type="checkbox" id="item-permit-cards-enchants" value="true" />
-                <label for="item-permit-cards-enchants">カード刺し/エンチャント有りも含める</label>
+              <div class="form-check form-check-inline">
+              精錬値 :
+              </div>
+{% for value in range(0, 11) %}
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="item-smelting-{{value|e}}" name="smelting[]" value="{{value|e}}" {% if value in smelting_list %}checked="checked"{% endif %} />
+                <label class="form-check-label" for="item-smelting-{{value|e}}">{{value|e}}</label>
+              </div>
+{% endfor %}
             </p>
+            <p>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="item-permit-cards" value="true" {% if permit_cards == True %}checked="checked"{% endif%}/>
+                <label class="form-check-label" for="item-permit-cards">カード刺しも含める</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="item-permit-enchants" value="true" {% if permit_enchants == True %}checked="checked"{% endif%}/>
+                <label class="form-check-label" for="item-permit-enchants">エンチャント有りも含める</label>
+              </div>
+            </p>
+            <p>
+              <div class="d-grid gap-2 col-6 mx-auto">
+                <button type="button" class="btn btn-primary" id="item-plot-button">更新 & 描画</button>
+              </div>
         </div>
-
         <div class="row">
           {{ plot_div|safe }}
         </div>
@@ -179,16 +199,29 @@
     {{ js_resources|safe }}
     {{ plot_script|safe }}
     <script type="text/javascript">
-        var item_select = document.getElementById('item-select');
-        var item_list = document.getElementById('item-list');
-        var item_permit = document.getElementById('item-permit-cards-enchants');
+        var item_select          = document.getElementById('item-select');
+        var item_list            = document.getElementById('item-list');
+        var item_permit_cards    = document.getElementById('item-permit-cards');
+        var item_permit_enchants = document.getElementById('item-permit-enchants');
+        var item_smeltings       = document.getElementsByName('smelting[]');
+        var item_plot            = document.getElementById('item-plot-button');
 
         function plot_item(event) {
             var item_name = item_select.value;
             if (item_name != undefined && item_name != "") {
                 var request_params="?name=" + item_name
-                if (item_permit != undefined && item_permit.checked) {
-                    request_params += "&cards=true&enchants=true"
+                if (item_permit_cards != undefined && item_permit_cards.checked) {
+                    request_params += "&cards=true"
+                }
+                if (item_permit_enchants != undefined && item_permit_enchants.checked) {
+                    request_params += "&enchants=true"
+                }
+                if (item_smeltings != undefined) {
+                  Array.prototype.forEach.call(item_smeltings, function(smelting) {
+                    if (smelting.checked) {
+                      request_params += "&smelting[]=" + smelting.value
+                    }
+                  });
                 }
                 request_params += "#plot"
 
@@ -214,8 +247,7 @@
                     });
                     item_select.placeholder = "アイテム名を入力してください";
                     item_select.value = "{{item_name}}";
-                    item_select.addEventListener("change", plot_item);
-                    item_permit.addEventListener("change", plot_item);
+                    item_plot.addEventListener("click", plot_item)
 
                     if ("{{permit_cards}}" == "True" || "{{permit_enchants}}" == "True") {
                         item_permit.checked = true;
