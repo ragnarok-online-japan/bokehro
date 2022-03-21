@@ -16,13 +16,13 @@
   <meta content="Bokeh ROはROのアイテム露店販売履歴をグラフ描画するサービスです" name="description">
 
   <meta property="og:site_name" content="RODB" />
-  <meta property="og:url" content="{{request.url}}">
+  <meta property="og:url" content="{{request.url|replace('http://', 'https://')}}">
   <meta property="og:description" content="Bokeh ROはROのアイテム露店販売履歴をグラフ描画するサービスです" />
   <meta property="og:type" content="article" />
 {% if item_id != None %}
-  <meta property="og:image" content="{{request.host_url}}item_img/{{item_id}}.png">
+  <meta property="og:image" content="{{request.host_url|replace('http://', 'https://')}}item_img/{{item_id}}.png">
 {% else %}
-  <meta property="og:image" content="{{request.host_url}}favicon.png">
+  <meta property="og:image" content="{{request.host_url|replace('http://', 'https://')}}favicon.png">
 {% endif %}
 
   <!-- Google Fonts -->
