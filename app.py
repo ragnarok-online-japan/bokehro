@@ -48,30 +48,41 @@ def bokehro():
     }
 
     df = None
-
+    item_id:int = None
     if item_name is not None:
         try:
             connection = MySQLdb.connect(**args["mysql"])
             connection.autocommit(False)
 
-            query_string: str = """
+            item_detail_query: str = """
                 SELECT id, datetime, unit_cost/1000000 AS 'unit_cost', smelting, cards, enchants
                 FROM item_detail_tbl
                 WHERE item_name = %(item_name)s
             """
 
             if permit_cards is False:
-                query_string += " AND cards = '[]'"
+                item_detail_query += " AND cards = '[]'"
             if permit_enchants is False:
-                query_string += " AND enchants = '[]'"
+                item_detail_query += " AND enchants = '[]'"
 
             smelting_list = [value for value in smelting_list if isinstance(value, int) == True]
             if len(smelting_list) > 0:
-                query_string += " AND smelting IN({:s})".format(",".join(map(str, smelting_list)))
+                item_detail_query += " AND smelting IN({:s})".format(",".join(map(str, smelting_list)))
 
-            query_string += " ORDER BY 1 ASC, id ASC;"
+            item_detail_query += " ORDER BY 1 ASC, id ASC;"
 
-            df = pd.read_sql(query_string, connection, params={"item_name":item_name})
+            df = pd.read_sql(item_detail_query, connection, params={"item_name":item_name})
+
+            item_id_query: str = """
+                SELECT item_id
+                FROM item_name_tbl
+                WHERE item_name = %(item_name)s;
+            """
+            with connection.cursor() as cursor:
+                cursor.execute(item_id_query, {"item_name":item_name})
+                item_id_row = cursor.fetchone()
+                if item_id_row is not None and len(item_id_row) == 1:
+                    item_id = item_id_row[0]
 
         except Exception as ex:
             raise ex
@@ -122,6 +133,7 @@ def bokehro():
     html = render_template(
         "bokehro.html",
         item_name=item_name,
+        item_id=item_id,
         permit_cards=permit_cards,
         permit_enchants=permit_enchants,
         smelting_list=smelting_list,

@@ -6,10 +6,24 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Cache-Control" content="no-cache">
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
-
+{% if item_name != "" %}
+  <title>RODB - Bokeh RO : アイテム({{item_name}}) の検索結果</title>
+  <meta property="og:title" content="Bokeh RO : アイテム({{item_name}}) の検索結果">
+{% else %}
   <title>RODB - Bokeh RO</title>
-  <meta content="RODB" name="description">
-  <meta content="ro jro ragnaok online" name="keywords">
+  <meta property="og:title" content="RODB - Bokeh RO">
+{% endif %}
+  <meta content="Bokeh ROはROのアイテム露店販売履歴をグラフ描画するサービスです" name="description">
+
+  <meta property="og:site_name" content="RODB" />
+  <meta property="og:url" content="{{request.url}}">
+  <meta property="og:description" content="Bokeh ROはROのアイテム露店販売履歴をグラフ描画するサービスです" />
+  <meta property="og:type" content="article" />
+{% if item_id != None %}
+  <meta property="og:image" content="{{request.host_url}}item_img/{{item_id}}.png">
+{% else %}
+  <meta property="og:image" content="{{request.host_url}}favicon.png">
+{% endif %}
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
