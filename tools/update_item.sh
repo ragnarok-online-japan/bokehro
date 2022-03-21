@@ -5,7 +5,7 @@ wget -q -O items.json https://ragnarokonline.0nyx.net/assets/json/items.json \
 
 cat << '_EOL_' | mysql pigeon -upigeon -p${MYSQL_PIGEON_PASSWORD}
 DROP TABLE item_name_tbl_tmp;
-CREATE TABLE item_name_tbl_tmp (item_name varchar(255), item_id bigint(1) UNSIGNED DEFAULT NULL);
+CREATE TABLE item_name_tbl_tmp (item_name varchar(255), item_id bigint(1) UNSIGNED DEFAULT NULL, description TEXT DEFAULT NULL);
 INSERT INTO item_name_tbl_tmp(item_name) SELECT DISTINCT item_name FROM item_detail_tbl ORDER BY 1;
 ALTER TABLE item_name_tbl_tmp ADD PRIMARY KEY (item_name);
 _EOL_

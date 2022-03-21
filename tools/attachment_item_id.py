@@ -48,7 +48,7 @@ def main(args: dict):
 
         update_query = """
             UPDATE item_name_tbl_tmp
-            SET item_id = %s
+            SET item_id = %s, description = %s
             WHERE item_name = %s
             ;
         """
@@ -59,18 +59,34 @@ def main(args: dict):
             cursor.execute(select_query)
             item_db = [item[0] for item in cursor.fetchall()]
 
+        pattern_slot = re.compile(r"^.+\[(\d+)\]$")
         for item_name in item_db:
-            displayname: str = re.sub("^(.+)\[(\d+|製造)\]$", r"\1", item_name)
             item_id: int = None
+            displayname: str = re.sub("^(.+)\[(\d+|製造)\]$", r"\1", item_name)
+            match_slot = pattern_slot.search(item_name)
+
             for key, values in item_list.items():
                 if values["displayname"] == displayname:
-                    item_id = key
-                    break
+                    if match_slot:
+                        slot_num: int = int(match_slot.group(1))
+                        if "slot" not in values and slot_num == 0:
+                            item_id = int(key)
+                            break
+                        elif "slot" in values and values["slot"] == slot_num:
+                            item_id = int(key)
+                            break
+                        else:
+                            item_id = int(key)
+                            #not break
+                    else:
+                        item_id = int(key)
+                        break
 
             if item_id is None:
-                print("[WARNING]", "Not found item_name:", displayname)
+                print("[WARNING]", "Not found item_name:", item_name)
             else:
-                item_db_ids.append((item_id, item_name))
+                description: str = item_list[str(item_id)]["description"]
+                item_db_ids.append((item_id, description, item_name))
 
         with connection.cursor() as cursor:
             cursor.executemany(update_query, item_db_ids)
