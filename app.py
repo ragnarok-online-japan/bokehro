@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import re
 import MySQLdb
 import pandas as pd
 from bokeh.embed import components
@@ -22,8 +23,9 @@ except Exception as ex:
 @app.route('/bokehro', methods=['GET'])
 def bokehro():
     item_name: str           = request.args.get("name", default="")
-    permit_cards: bool       = request.args.get("cards", default=False, type=bool)
-    permit_enchants: bool    = request.args.get("enchants", default=False, type=bool)
+    is_card: str             = request.args.get("is_card", default="_all_")
+    is_enchant: str          = request.args.get("is_enchant", default="_all_")
+    is_round_cost: bool      = request.args.get("is_round_cost", default=True, type=bool)
     smelting_list: list[int] = request.args.getlist("smelting[]", type=int)
 
     # init
@@ -49,40 +51,66 @@ def bokehro():
 
     df = None
     item_id:int = None
+    item_description: str = None
+
     if item_name is not None:
         try:
             connection = MySQLdb.connect(**args["mysql"])
             connection.autocommit(False)
 
-            item_detail_query: str = """
-                SELECT id, datetime, unit_cost/1000000 AS 'unit_cost', smelting, cards, enchants
+            sql_unit_cost = "unit_cost/1000000"
+            if is_round_cost == False:
+                sql_unit_cost = "unit_cost"
+
+            query_item_detail: str = """
+                SELECT id, datetime, {:s} AS 'unit_cost', smelting, cards, enchants
                 FROM item_detail_tbl
                 WHERE item_name = %(item_name)s
-            """
+            """.format(sql_unit_cost)
 
-            if permit_cards is False:
-                item_detail_query += " AND cards = '[]'"
-            if permit_enchants is False:
-                item_detail_query += " AND enchants = '[]'"
+            if is_card == "_all_":
+                pass
+            elif is_card == "_none_":
+                query_item_detail += " AND cards = '[]'"
+            elif is_card == "_required_":
+                query_item_detail += " AND cards != '[]'"
+
+            if is_enchant == "_all_":
+                pass
+            elif is_enchant == "_none_":
+                query_item_detail += " AND enchants = '[]'"
+            elif is_enchant == "_required_":
+                query_item_detail += " AND enchants != '[]'"
 
             smelting_list = [value for value in smelting_list if isinstance(value, int) == True]
             if len(smelting_list) > 0:
-                item_detail_query += " AND smelting IN({:s})".format(",".join(map(str, smelting_list)))
+                query_item_detail += " AND smelting IN({:s})".format(",".join(map(str, smelting_list)))
 
-            item_detail_query += " ORDER BY 1 ASC, id ASC;"
+            query_item_detail += " ORDER BY 1 ASC, id ASC;"
 
-            df = pd.read_sql(item_detail_query, connection, params={"item_name":item_name})
+            df = pd.read_sql(query_item_detail, connection, params={"item_name":item_name})
 
-            item_id_query: str = """
-                SELECT item_id
-                FROM item_name_tbl
-                WHERE item_name = %(item_name)s;
+            query_item_data: str = """
+                SELECT item_id, description
+                FROM item_data_tbl
+                WHERE item_name = %(item_name)s
+                AND slot = %(slot)s;
             """
+            item_search_name: str = item_name
+            slot: int = 0
+            match = re.match(r"^(.+)\[([0-9])\]$", item_name)
+            if match:
+                item_search_name = match.group(1)
+                slot = int(match.group(2))
+
             with connection.cursor() as cursor:
-                cursor.execute(item_id_query, {"item_name":item_name})
-                item_id_row = cursor.fetchone()
-                if item_id_row is not None and len(item_id_row) == 1:
-                    item_id = item_id_row[0]
+                cursor.execute(query_item_data, {"item_name":item_search_name, "slot":slot})
+                item_row = cursor.fetchone()
+                if item_row is not None:
+                    item_id = item_row[0]
+                    item_description = item_row[1]
+                    if item_description is not None:
+                        item_description = item_description.replace("\n", "<br/>\n")
 
         except Exception as ex:
             raise ex
@@ -114,7 +142,7 @@ def bokehro():
             tooltips=[
                 ("ID", "@id"),
                 ("日時","@datetime{%F %R}"),
-                ("価格","@unit_cost M"),
+                ("価格","@unit_cost"),
                 ("精錬値","@smelting"),
                 ("カード","@cards"),
                 ("エンチャント","@enchants")
@@ -133,9 +161,11 @@ def bokehro():
     html = render_template(
         "bokehro.html",
         item_name=item_name,
+        item_count=len(df),
         item_id=item_id,
-        permit_cards=permit_cards,
-        permit_enchants=permit_enchants,
+        item_description=item_description,
+        is_card=is_card,
+        is_enchant=is_enchant,
         smelting_list=smelting_list,
         plot_script=plot_script,
         plot_div=plot_div,
@@ -154,7 +184,7 @@ def bokehro_items():
 
         query_string = """
             SELECT item_name
-            FROM item_name_tbl
+            FROM item_suggest_tbl
             ORDER BY 1 ASC
             ;
         """

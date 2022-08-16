@@ -7,8 +7,8 @@
     <meta http-equiv="Cache-Control" content="no-cache">
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
 {% if item_name != "" %}
-  <title>RODB - Bokeh RO : アイテム({{item_name}}) の検索結果</title>
-  <meta property="og:title" content="Bokeh RO : アイテム({{item_name}}) の検索結果">
+  <title>RODB - Bokeh RO : {{item_name}} の検索結果</title>
+  <meta property="og:title" content="Bokeh RO : {{item_name}} の検索結果">
 {% else %}
   <title>RODB - Bokeh RO</title>
   <meta property="og:title" content="RODB - Bokeh RO">
@@ -47,19 +47,21 @@
       src: url("/assets/woff/FuturaDisOutP.woff") format("woff");
     }
 
+    @font-face {
+      font-family: "melete-regular";
+      src: url("/assets/otf/Melete-Regular.otf") format("opentype");
+    }
+
     #header h1.logo {
       font-family: "futura-display";
-      font-weight: bold;
     }
 
     #hero h1 {
       font-family: "futura-display";
-      font-weight: bold;
     }
 
     #footer div.footer-contact h3 {
       font-family: "futura-display";
-      font-weight: bold;
     }
   </style>
   <!-- =======================================================
@@ -130,12 +132,20 @@
             </p>
             <p>
               <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="item-permit-cards" value="true" {% if permit_cards == True %}checked="checked"{% endif%}/>
-                <label class="form-check-label" for="item-permit-cards">カード刺しも含める</label>
+                カード:
+                <select class="form-select" id="item-is-card">
+                  <option value="_all_" {% if is_card == "_all_" %}selected{% endif%}>絞らない(全て)</option>
+                  <option value="_none_" {% if is_card == "_none_" %}selected{% endif%}>カード無し</option>
+                  <option value="_required_" {% if is_card == "_required_" %}selected{% endif%}>カード有り</option>
+                </select>
               </div>
               <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="item-permit-enchants" value="true" {% if permit_enchants == True %}checked="checked"{% endif%}/>
-                <label class="form-check-label" for="item-permit-enchants">エンチャント有りも含める</label>
+                エンチャント:
+                <select class="form-select" id="item-is-enchant">
+                  <option value="_all_" {% if is_enchant == "_all_" %}selected{% endif%}>絞らない(全て)</option>
+                  <option value="_none_" {% if is_enchant == "_none_" %}selected{% endif%}>エンチャント無し</option>
+                  <option value="_required_" {% if is_enchant == "_required_" %}selected{% endif%}>エンチャント有り</option>
+                </select>
               </div>
             </p>
             <p>
@@ -144,10 +154,43 @@
               </div>
         </div>
         <div class="row">
+          {% if item_name != None and item_count == 0 %}
+          <h3 class="text-center">該当アイテムの露店販売履歴は有りません</h3>
+          {% else %}
           {{ plot_div|safe }}
+          {% endif %}
         </div>
       </div>
     </section><!-- End Sevices Section -->
+
+{% if item_id != None %}
+    <!-- ======= Item Section ======= -->
+    <section id="item" class="team section-bg">
+      <div class="container" data-aos="fade-up">
+
+        <div class="section-title">
+          <h2>Item Detail</h2>
+          <p></p>
+        </div>
+
+        <div class="row">
+
+          <div class="col-lg-3 col-md-6 align-items-stretch" data-aos="fade-up" data-aos-delay="100">
+            <div class="member">
+              <div class="member-img">
+                <img src="{{request.host_url|replace('http://', 'https://')}}item_img/{{item_id}}.png" class="img-fluid" alt="icon">
+              </div>
+              <div>
+                <h4>{{item_name}}</h4>
+                <span>{{item_description|safe}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section><!-- End Item Section -->
+{% endif %}
 </main><!-- End #main -->
 
 <!-- ======= Footer ======= -->
@@ -180,7 +223,10 @@
 
       <div class="me-md-auto text-center text-md-start">
         <div class="copyright">
-          &copy; Copyright <strong><span>0nyx.net</span></strong>. All Rights Reserved
+          &copy; Copyright <strong><span>0nyx.net</span></strong>. All Rights Reserved<br>
+          当サイトで公開している元データは下記に帰属しており、再配布は禁止しております<br>
+          &copy; Gravity Co., Ltd. &amp; LeeMyoungJin(studio DTDS) All rights reserved.<br>
+          &copy; GungHo Online Entertainment, Inc. All Rights Reserved.
         </div>
         <div class="credits">
           <!-- All the links in the footer should remain intact. -->
@@ -215,8 +261,8 @@
     <script type="text/javascript">
         var item_select          = document.getElementById('item-select');
         var item_list            = document.getElementById('item-list');
-        var item_permit_cards    = document.getElementById('item-permit-cards');
-        var item_permit_enchants = document.getElementById('item-permit-enchants');
+        var item_is_card         = document.getElementById('item-is-card');
+        var item_is_enchant      = document.getElementById('item-is-enchant');
         var item_smeltings       = document.getElementsByName('smelting[]');
         var item_plot            = document.getElementById('item-plot-button');
 
@@ -224,11 +270,11 @@
             var item_name = item_select.value;
             if (item_name != undefined && item_name != "") {
                 var request_params="?name=" + item_name
-                if (item_permit_cards != undefined && item_permit_cards.checked) {
-                    request_params += "&cards=true"
+                if (item_is_card != undefined) {
+                    request_params += "&is_card=" + item_is_card.value
                 }
-                if (item_permit_enchants != undefined && item_permit_enchants.checked) {
-                    request_params += "&enchants=true"
+                if (item_is_enchant != undefined) {
+                    request_params += "&is_enchant=" + item_is_enchant.value
                 }
                 if (item_smeltings != undefined) {
                   Array.prototype.forEach.call(item_smeltings, function(smelting) {

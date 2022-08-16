@@ -41,13 +41,13 @@ def main(args: dict):
 
         select_query = """
             SELECT item_name
-            FROM item_name_tbl_tmp
+            FROM item_suggest_tbl_tmp
             ORDER BY 1 ASC
             ;
         """
 
         update_query = """
-            UPDATE item_name_tbl_tmp
+            UPDATE item_suggest_tbl_tmp
             SET item_id = %s, description = %s
             WHERE item_name = %s
             ;
