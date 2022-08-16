@@ -1,6 +1,7 @@
 #!/bin/bash -l
 
-wget -q -O items.json https://ragnarokonline.0nyx.net/assets/json/items.json
+wget -q -O items.json https://ragnarokonline.0nyx.net/assets/json/items.json \
+ && ./get_item_img.py --export-path /var/www/html/item_img/
 
 cat << '_EOL_' | mysql pigeon -upigeon -p${MYSQL_PIGEON_PASSWORD}
 DROP TABLE item_suggest_tbl_tmp;
