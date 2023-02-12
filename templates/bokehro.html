@@ -2,69 +2,51 @@
 <html lang="ja">
 
 <head>
-  <meta charset="utf-8">
+    <meta charset="utf-8">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Cache-Control" content="no-cache">
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
-{% if item_name != "" %}
-  <title>RODB - Bokeh RO : {{item_name}} の検索結果</title>
-  <meta property="og:title" content="Bokeh RO : {{item_name}} の検索結果">
-{% else %}
-  <title>RODB - Bokeh RO</title>
-  <meta property="og:title" content="RODB - Bokeh RO">
-{% endif %}
-  <meta content="Bokeh ROはROのアイテム露店販売履歴をグラフ描画するサービスです" name="description">
+    {% if item_name != "" %}
+    <title>RODB - Bokeh RO : {{item_name}} の検索結果</title>
+    <meta property="og:title" content="Bokeh RO : {{item_name}} の検索結果">
+    {% else %}
+    <title>RODB - Bokeh RO</title>
+    <meta property="og:title" content="RODB - Bokeh RO">
+    {% endif %}
+    <meta content="Bokeh ROはROのアイテム露店販売履歴をグラフ描画するサービスです" name="description">
 
-  <meta property="og:site_name" content="RODB" />
-  <meta property="og:url" content="{{request.url|replace('http://', 'https://')}}">
-  <meta property="og:description" content="Bokeh ROはROのアイテム露店販売履歴をグラフ描画するサービスです" />
-  <meta property="og:type" content="article" />
-{% if item_id != None %}
-  <meta property="og:image" content="{{request.host_url|replace('http://', 'https://')}}item_img/{{item_id}}.png">
-{% else %}
-  <meta property="og:image" content="{{request.host_url|replace('http://', 'https://')}}favicon.png">
-{% endif %}
+    <meta property="og:site_name" content="RODB" />
+    <meta property="og:url" content="{{request.url|replace('http://', 'https://')}}">
+    <meta property="og:description" content="Bokeh ROはROのアイテム露店販売履歴をグラフ描画するサービスです" />
+    <meta property="og:type" content="article" />
+    {% if item_id != None %}
+    <meta property="og:image" content="{{request.host_url|replace('http://', 'https://')}}item_img/{{item_id}}.png">
+    {% else %}
+    <meta property="og:image" content="{{request.host_url|replace('http://', 'https://')}}favicon.png">
+    {% endif %}
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i"
+        rel="stylesheet">
 
-  <!-- Vendor CSS Files -->
-  <link href="/assets/vendor/aos/aos.css" rel="stylesheet">
-  <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-  <link href="/assets/vendor/boxicons/css/boxicons.min.css" rel="stylesheet">
-  <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
-  <link href="/assets/vendor/remixicon/remixicon.css" rel="stylesheet">
-  <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+    <!-- Vendor CSS Files -->
+    <link href="/assets/vendor/aos/aos.css" rel="stylesheet">
+    <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="/assets/vendor/boxicons/css/boxicons.min.css" rel="stylesheet">
+    <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+    <link href="/assets/vendor/remixicon/remixicon.css" rel="stylesheet">
+    <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
 
-  <!-- Template Main CSS File -->
-  <link href="/assets/css/style.css" rel="stylesheet">
-  {{ css_resources|safe }}
+    <!-- Template Main CSS File -->
+    <link href="/assets/css/style.css" rel="stylesheet">
 
-  <style>
-    @font-face {
-      font-family: "futura-display";
-      src: url("/assets/woff/FuturaDisOutP.woff") format("woff");
-    }
+    <link href="/assets/css/rodb.css" rel="stylesheet">
 
-    @font-face {
-      font-family: "melete-regular";
-      src: url("/assets/otf/Melete-Regular.otf") format("opentype");
-    }
+    {{ css_resources|safe }}
 
-    #header h1.logo {
-      font-family: "futura-display";
-    }
-
-    #hero h1 {
-      font-family: "futura-display";
-    }
-
-    #footer div.footer-contact h3 {
-      font-family: "futura-display";
-    }
-  </style>
-  <!-- =======================================================
+    <!-- =======================================================
   * Template Name: OnePage - v4.7.0
   * Template URL: https://bootstrapmade.com/onepage-multipurpose-bootstrap-template/
   * Author: BootstrapMade.com
@@ -74,176 +56,195 @@
 
 <body>
 
-  <!-- ======= Header ======= -->
-  <header id="header" class="fixed-top">
-    <div class="container d-flex align-items-center justify-content-between">
+    <!-- ======= Header ======= -->
+    <header id="header" class="fixed-top">
+        <div class="container d-flex align-items-center justify-content-between">
 
-      <h1 class="logo"><a href="/">RODB</a></h1>
-      <!-- Uncomment below if you prefer to use an image logo -->
-      <!-- <a href="index.html" class="logo"><img src="assets/img/logo.png" alt="" class="img-fluid"></a>-->
+            <h1 class="logo"><a href="/">RODB</a></h1>
+            <!-- Uncomment below if you prefer to use an image logo -->
+            <!-- <a href="index.html" class="logo"><img src="assets/img/logo.png" alt="" class="img-fluid"></a>-->
 
-      <nav id="navbar" class="navbar">
-        <ul>
-          <li><a class="nav-link scrollto active" href="/#">Home</a></li>
-          <li><a class="nav-link scrollto" href="/#services">Services</a></li>
-          <li><a class="nav-link scrollto" href="/#team">Team</a></li>
-        </ul>
-        <i class="bi bi-list mobile-nav-toggle"></i>
-      </nav><!-- .navbar -->
+            <nav id="navbar" class="navbar">
+                <ul>
+                    <li><a class="nav-link scrollto active" href="/#">Home</a></li>
+                    <li><a class="nav-link scrollto" href="/#services">Services</a></li>
+                    <li><a class="nav-link scrollto" href="/#team">Team</a></li>
+                </ul>
+                <i class="bi bi-list mobile-nav-toggle"></i>
+            </nav><!-- .navbar -->
 
-    </div>
-  </header><!-- End Header -->
-
-  <!-- ======= Hero Section ======= -->
-  <section id="hero" class="d-flex align-items-center">
-    <div class="container position-relative" data-aos="fade-up" data-aos-delay="100">
-      <div class="row justify-content-center">
-        <div class="col-xl-7 col-lg-9 text-center">
-          <h1>RODB</h1>
-          <h2>Japan MMO: Ragnarok Online Database</h2>
         </div>
-      </div>
+    </header><!-- End Header -->
 
-    </div>
-  </section><!-- End Hero -->
-
-<main id="main">
-
-    <!-- ======= Plot Section ======= -->
-    <section id="plot" class="services section-bg">
-      <div class="container" data-aos="fade-up">
-
-        <div class="section-title">
-            <h2>Bokeh RO</h2>
-            <p>
-                <input class="form-control" list="item-list" id="item-select" placeholder="Type to search..." size="50" />
-                <datalist id="item-list"></datalist>
-            </p>
-            <p>
-              <div class="form-check form-check-inline">
-              精錬値 :
-              </div>
-{% for value in range(0, 11) %}
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="item-smelting-{{value|e}}" name="smelting[]" value="{{value|e}}" {% if value in smelting_list %}checked="checked"{% endif %} />
-                <label class="form-check-label" for="item-smelting-{{value|e}}">{{value|e}}</label>
-              </div>
-{% endfor %}
-            </p>
-            <p>
-              <div class="form-check form-check-inline">
-                カード:
-                <select class="form-select" id="item-is-card">
-                  <option value="_all_" {% if is_card == "_all_" %}selected{% endif%}>絞らない(全て)</option>
-                  <option value="_none_" {% if is_card == "_none_" %}selected{% endif%}>カード無し</option>
-                  <option value="_required_" {% if is_card == "_required_" %}selected{% endif%}>カード有り</option>
-                </select>
-              </div>
-              <div class="form-check form-check-inline">
-                エンチャント:
-                <select class="form-select" id="item-is-enchant">
-                  <option value="_all_" {% if is_enchant == "_all_" %}selected{% endif%}>絞らない(全て)</option>
-                  <option value="_none_" {% if is_enchant == "_none_" %}selected{% endif%}>エンチャント無し</option>
-                  <option value="_required_" {% if is_enchant == "_required_" %}selected{% endif%}>エンチャント有り</option>
-                </select>
-              </div>
-            </p>
-            <p>
-              <div class="d-grid gap-2 col-6 mx-auto">
-                <button type="button" class="btn btn-primary" id="item-plot-button">更新 & 描画</button>
-              </div>
-        </div>
-        <div class="row">
-          {% if item_name != "" and item_count == 0 %}
-          <h3 class="text-center">該当アイテムの露店販売履歴は有りません</h3>
-          {% else %}
-          {{ plot_div|safe }}
-          {% endif %}
-        </div>
-      </div>
-    </section><!-- End Sevices Section -->
-
-{% if item_id != None %}
-    <!-- ======= Item Section ======= -->
-    <section id="item" class="team section-bg">
-      <div class="container" data-aos="fade-up">
-
-        <div class="section-title">
-          <h2>Item Detail</h2>
-          <p></p>
-        </div>
-
-        <div class="row">
-
-          <div class="col-lg-3 col-md-6 align-items-stretch" data-aos="fade-up" data-aos-delay="100">
-            <div class="member">
-              <div class="member-img">
-                <img src="{{request.host_url|replace('http://', 'https://')}}item_img/{{item_id}}.png" class="img-fluid" alt="icon">
-              </div>
-              <div>
-                <h4>{{item_name}}</h4>
-                <span>{{item_description|safe}}</span>
-              </div>
+    <!-- ======= Hero Section ======= -->
+    <section id="hero" class="d-flex align-items-center">
+        <div class="container position-relative" data-aos="fade-up" data-aos-delay="100">
+            <div class="row justify-content-center">
+                <div class="col-xl-7 col-lg-9 text-center">
+                    <h1>RODB</h1>
+                    <h2>Japan MMO: Ragnarok Online Database</h2>
+                </div>
             </div>
-          </div>
-        </div>
-
-      </div>
-    </section><!-- End Item Section -->
-{% endif %}
-</main><!-- End #main -->
-
-<!-- ======= Footer ======= -->
-<footer id="footer">
-
-    <div class="footer-top">
-      <div class="container">
-        <div class="row">
-
-          <div class="col-lg-3 col-md-6 footer-contact">
-            <h3>RODB</h3>
-            <p>
-            </p>
-          </div>
-
-          <div class="col-lg-2 col-md-6 footer-links">
-            <h4>Useful Links</h4>
-            <ul>
-              <li><i class="bx bx-chevron-right"></i> <a href="/#">Home</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="/#services">Services</a></li>
-              <li><i class="bx bx-chevron-right"></i> <a href="/#teams">Teams</a></li>
-            </ul>
-          </div>
 
         </div>
-      </div>
-    </div>
+    </section><!-- End Hero -->
 
-    <div class="container d-md-flex py-4">
+    <main id="main">
 
-      <div class="me-md-auto text-center text-md-start">
-        <div class="copyright">
-          &copy; Copyright <strong><span>0nyx.net</span></strong>. All Rights Reserved<br>
-          当サイトで公開している元データは下記に帰属しており、再配布は禁止しております<br>
-          &copy; Gravity Co., Ltd. &amp; LeeMyoungJin(studio DTDS) All rights reserved.<br>
-          &copy; GungHo Online Entertainment, Inc. All Rights Reserved.
+        <!-- ======= Breadcrumbs ======= -->
+        <section class="breadcrumbs">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2>Bokeh RO</h2>
+                    <ol>
+                        <li><a href="/">Index</a></li>
+                        <li>Bokeh RO</li>
+                    </ol>
+                </div>
+            </div>
+        </section><!-- End Breadcrumbs -->
+
+        <!-- ======= Plot Section ======= -->
+        <section id="plot" class="inner-page">
+            <div class="container" data-aos="fade-up">
+
+                <div class="section-title">
+                    <h2>Bokeh RO</h2>
+                    <p>
+                        <input class="form-control" list="item-list" id="item-select" placeholder="Type to search..."
+                            size="50" />
+                        <datalist id="item-list"></datalist>
+                    </p>
+                    <p>
+                    <div class="form-check form-check-inline">
+                        精錬値 :
+                    </div>
+                    {% for value in range(0, 11) %}
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="item-refining-{{value|e}}" name="refining[]"
+                            value="{{value|e}}" {% if value in refining_list %}checked="checked" {% endif %} />
+                        <label class="form-check-label" for="item-refining-{{value|e}}">{{value|e}}</label>
+                    </div>
+                    {% endfor %}
+                    </p>
+                    <p>
+                    <div class="form-check form-check-inline">
+                        カード:
+                        <select class="form-select" id="item-is-card">
+                            <option value="_all_" {% if is_card=="_all_" %}selected{% endif%}>絞らない(全て)</option>
+                            <option value="_none_" {% if is_card=="_none_" %}selected{% endif%}>カード無し</option>
+                            <option value="_required_" {% if is_card=="_required_" %}selected{% endif%}>カード有り</option>
+                        </select>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        エンチャント:
+                        <select class="form-select" id="item-is-enchant">
+                            <option value="_all_" {% if is_enchant=="_all_" %}selected{% endif%}>絞らない(全て)</option>
+                            <option value="_none_" {% if is_enchant=="_none_" %}selected{% endif%}>エンチャント無し</option>
+                            <option value="_required_" {% if is_enchant=="_required_" %}selected{% endif%}>エンチャント有り
+                            </option>
+                        </select>
+                    </div>
+                    </p>
+                    <p>
+                    <div class="d-grid gap-2 col-6 mx-auto">
+                        <button type="button" class="btn btn-primary" id="item-plot-button">更新 & 描画</button>
+                    </div>
+                </div>
+                <div class="row">
+                    {% if item_name != "" and item_count == 0 %}
+                    <h3 class="text-center">該当アイテムの露店販売履歴は有りません</h3>
+                    {% else %}
+                    {{ plot_div|safe }}
+                    {% endif %}
+                </div>
+            </div>
+        </section><!-- End Sevices Section -->
+
+        {% if item_id != None %}
+        <!-- ======= Item Section ======= -->
+        <section id="item" class="inner-page">
+            <div class="container" data-aos="fade-up">
+
+                <div class="section-title">
+                    <h2>Item Detail</h2>
+                    <p></p>
+                </div>
+
+                <div class="row">
+
+                    <div class="col-lg-3 col-md-6 align-items-stretch" data-aos="fade-up" data-aos-delay="100">
+                        <div class="member">
+                            <div class="member-img">
+                                <img src="https://rotool.gungho.jp/icon/{{item_id}}.png" class="img-fluid" alt="icon">
+                            </div>
+                            <div>
+                                <h4>{{item_name}}</h4>
+                                <span>{{item_description|safe}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section><!-- End Item Section -->
+        {% endif %}
+    </main><!-- End #main -->
+
+    <!-- ======= Footer ======= -->
+    <footer id="footer">
+
+        <div class="footer-top">
+            <div class="container">
+                <div class="row">
+
+                    <div class="col-lg-3 col-md-6 footer-contact">
+                        <h3>RODB</h3>
+                        <p>
+                        </p>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6 footer-links">
+                        <h4>Useful Links</h4>
+                        <ul>
+                            <li><i class="bx bx-chevron-right"></i> <a href="/#">Home</a></li>
+                            <li><i class="bx bx-chevron-right"></i> <a href="/#services">Services</a></li>
+                            <li><i class="bx bx-chevron-right"></i> <a href="/#teams">Teams</a></li>
+                            <li><i class="bx bx-chevron-right"></i> <a
+                                    href="https://www.amazon.co.jp/hz/wishlist/ls/2EK058T5A6BN7">Amazon欲しいものリスト</a></li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
         </div>
-        <div class="credits">
-          <!-- All the links in the footer should remain intact. -->
-          <!-- You can delete the links only if you purchased the pro version. -->
-          <!-- Licensing information: https://bootstrapmade.com/license/ -->
-          <!-- Purchase the pro version with working PHP/AJAX contact form: https://bootstrapmade.com/onepage-multipurpose-bootstrap-template/ -->
-          Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+
+        <div class="container d-md-flex py-4">
+
+            <div class="me-md-auto text-center text-md-start">
+                <div class="copyright">
+                    &copy; Copyright <strong><span>0nyx.net</span></strong>. All Rights Reserved<br>
+                    当サイトで公開している元データは下記に帰属しており、再配布は禁止しております<br>
+                    &copy; Gravity Co., Ltd. &amp; LeeMyoungJin(studio DTDS) All rights reserved.<br>
+                    &copy; GungHo Online Entertainment, Inc. All Rights Reserved.
+                </div>
+                <div class="credits">
+                    <!-- All the links in the footer should remain intact. -->
+                    <!-- You can delete the links only if you purchased the pro version. -->
+                    <!-- Licensing information: https://bootstrapmade.com/license/ -->
+                    <!-- Purchase the pro version with working PHP/AJAX contact form: https://bootstrapmade.com/onepage-multipurpose-bootstrap-template/ -->
+                    Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+                </div>
+            </div>
+            <div class="social-links text-center text-md-right pt-3 pt-md-0">
+                <a href="https://twitter.com/_m10i" class="twitter"><i class="bx bxl-twitter"></i></a>
+            </div>
         </div>
-      </div>
-      <div class="social-links text-center text-md-right pt-3 pt-md-0">
-        <a href="https://twitter.com/_m10i" class="twitter"><i class="bx bxl-twitter"></i></a>
-      </div>
-    </div>
-</footer><!-- End Footer -->
+    </footer><!-- End Footer -->
 
     <div id="preloader"></div>
-    <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+    <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i
+            class="bi bi-arrow-up-short"></i></a>
 
     <!-- Vendor JS Files -->
     <script src="/assets/vendor/purecounter/purecounter.js"></script>
@@ -259,33 +260,33 @@
     {{ js_resources|safe }}
     {{ plot_script|safe }}
     <script type="text/javascript">
-        var item_select          = document.getElementById('item-select');
-        var item_list            = document.getElementById('item-list');
-        var item_is_card         = document.getElementById('item-is-card');
-        var item_is_enchant      = document.getElementById('item-is-enchant');
-        var item_smeltings       = document.getElementsByName('smelting[]');
-        var item_plot            = document.getElementById('item-plot-button');
+        var item_select = document.getElementById('item-select');
+        var item_list = document.getElementById('item-list');
+        var item_is_card = document.getElementById('item-is-card');
+        var item_is_enchant = document.getElementById('item-is-enchant');
+        var item_refinings = document.getElementsByName('refining[]');
+        var item_plot = document.getElementById('item-plot-button');
 
         function plot_item(event) {
             var item_name = item_select.value;
             if (item_name != undefined && item_name != "") {
-                var request_params="?name=" + item_name
+                var request_params = "?name=" + item_name
                 if (item_is_card != undefined) {
                     request_params += "&is_card=" + item_is_card.value
                 }
                 if (item_is_enchant != undefined) {
                     request_params += "&is_enchant=" + item_is_enchant.value
                 }
-                if (item_smeltings != undefined) {
-                  Array.prototype.forEach.call(item_smeltings, function(smelting) {
-                    if (smelting.checked) {
-                      request_params += "&smelting[]=" + smelting.value
-                    }
-                  });
+                if (item_refinings != undefined) {
+                    Array.prototype.forEach.call(item_refinings, function (refining) {
+                        if (refining.checked) {
+                            request_params += "&refining[]=" + refining.value
+                        }
+                    });
                 }
                 request_params += "#plot"
 
-                location.href=request_params
+                location.href = request_params
             }
         }
 
@@ -327,6 +328,15 @@
         request.send();
     </script>
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YCM65EZMQL"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-YCM65EZMQL');
+    </script>
 
 </body>
 
