@@ -1,5 +1,8 @@
-mysqlclient
-pandas
+SQLAlchemy
 bokeh
 flask
 jsonc-parser
+mysqlclient
+pandas
+redis
+redis-cli

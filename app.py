@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 
-from io import StringIO
+import itertools
 import json
 import re
-import MySQLdb
+from io import StringIO
+
 import pandas as pd
+import pymysql
 from bokeh.embed import components
 from bokeh.models import HoverTool
 from bokeh.plotting import figure
 from bokeh.resources import INLINE as resources_inline
-from flask import Flask, jsonify, make_response, render_template, request, send_file
+from flask import (Flask, jsonify, make_response, render_template, request,
+                   send_file)
 from jsonc_parser.parser import JsoncParser
+import redis
 
 app = Flask(__name__, template_folder="templates")
 app.config["JSON_AS_ASCII"] = False
@@ -24,15 +28,11 @@ except Exception as ex:
 
 @app.route("/bokehro", methods=["GET", "POST"])
 def bokehro():
-    item_name: str           = request.args.get("name", default="")
-    is_card: str             = request.args.get("is_card", default="_all_")
-    is_enchant: str          = request.args.get("is_enchant", default="_all_")
-    is_option: str           = request.args.get("is_option", default="_all_")
-    is_round_cost: bool      = request.args.get("is_round_cost", default=True, type=bool)
-    refinings: list[int] = request.args.getlist("refining[]", type=int)
+    item_name: str            = request.args.get("name", default="", type=str)
+    refinings: list[int]      = request.args.getlist("refining[]", type=int)
 
-    enchants: list[str]   = request.args.getlist("enchant[]", type=str)
-    options: list[str]   = request.args.getlist("option[]", type=str)
+    card_enchants: list[str]  = request.args.getlist("card_enchants[]", type=str)
+    random_options: list[str] = request.args.getlist("random_options[]", type=str)
 
     # init
     connection = None
@@ -56,68 +56,71 @@ def bokehro():
     }
 
     df = None
+    item_count: int = 0
     item_id:int = None
     item_description: str = None
+    card_enchant_list: list = []
+    random_option_list: list = []
 
-    if item_name is not None:
+    try:
+        redis_conn = redis.Redis(host="localhost", port=6379, db=0, encoding="utf-8")
+    except:
+        pass
+
+    if item_name is not None and item_name != "":
         try:
-            connection = MySQLdb.connect(**args["mysql-ro"])
-            connection.autocommit(False)
+            connection = pymysql.connect(**args["mysql-ro"])
 
-            sql_unit_cost = "unit_cost/1000000"
-            if is_round_cost == False:
-                sql_unit_cost = "unit_cost"
-
-            query_item_detail: str = """
-                SELECT id, world, datetime, {:s} AS 'unit_cost', refining, cards, enchants, options
-                FROM item_detail_tbl
+            query_item_trade: str = """
+                SELECT id, log_date, unit_price/1000000 AS 'unit_price', world, map_name, refining_level, cards, random_options
+                FROM item_trade_tbl
                 WHERE item_name = %(item_name)s
-            """.format(sql_unit_cost)
-
-            if is_card == "_all_":
-                pass
-            elif is_card == "_none_":
-                query_item_detail += " AND cards = '[]'"
-            elif is_card == "_required_":
-                query_item_detail += " AND cards != '[]'"
-
-            if is_enchant == "_all_":
-                pass
-            elif is_enchant == "_none_":
-                query_item_detail += " AND enchants = '[]'"
-            elif is_enchant == "_required_":
-                query_item_detail += " AND enchants != '[]'"
-
-            #if is_option == "_all_":
-            #    pass
-            #elif is_option == "_none_":
-            #    query_item_detail += " AND options = '[]'"
-            #elif is_option == "_required_":
-            #    query_item_detail += " AND options != '[]'"
+            """
 
             refinings = [value for value in refinings if isinstance(value, int) == True]
             if len(refinings) > 0:
-                query_item_detail += " AND refining IN({:s})".format(",".join(map(str, refinings)))
+                query_item_trade += " AND refining_level IN({:s})".format(",".join(map(str, refinings)))
 
-            if len(enchants) > 0:
-                for value in enchants:
-                    query_item_detail += " AND JSON_CONTAINS(enchants, '\"{:s}\"', '$')".format(
-                        connection.escape_string(value.replace("%","%%").encode("utf-8")).decode())
+            if len(card_enchants) > 0:
+                for value in card_enchants:
+                    query_item_trade += " AND JSON_CONTAINS(cards, '\"{:s}\"', '$')".format(
+                        connection.escape_string(value.replace("%","%%")))
 
-            if len(options) > 0:
-                for value in options:
-                    query_item_detail += " AND JSON_CONTAINS(options, '\"{:s}\"', '$')".format(
-                        connection.escape_string(value.replace("%","%%").encode("utf-8")).decode())
+            if len(random_options) > 0:
+                for value in random_options:
+                    query_item_trade += " AND JSON_CONTAINS(random_options, '\"{:s}\"', '$')".format(
+                        connection.escape_string(value.replace("%","%%")))
 
-            query_item_detail += " ORDER BY 1 ASC;"
+            query_item_trade += " ORDER BY 1 ASC;"
 
-            df = pd.read_sql(query_item_detail, connection, params={"item_name":item_name})
+            df = pd.read_sql(sql=query_item_trade, con=connection, params={"item_name":item_name})
 
-            enchant_list: list = [json.loads(value) for value in df["enchants"].to_list()]
-            enchant_list = sorted(set(sum(enchant_list, [])))
+            if len(df) > 0:
+                try:
+                    count = redis_conn.get(item_name.encode("utf-8"))
+                    if count is None:
+                        count = 1
+                    else:
+                        count = int(count) + 1
+                    redis_conn.set(item_name, count, keepttl=(60*60*24))
+                except:
+                    pass
 
-            option_list: list = [json.loads(value) for value in df["options"].to_list()]
-            option_list = sorted(set(sum(option_list, [])))
+            for value in df["cards"].to_list():
+                json_list = json.loads(value)
+                json_list = set(json_list)
+                if None in json_list:
+                    json_list.remove(None)
+                card_enchant_list.append(json_list)
+            card_enchant_list = sorted(set(itertools.chain.from_iterable(card_enchant_list)))
+
+            for value in df["random_options"].to_list():
+                json_list = json.loads(value)
+                json_list = set(json_list)
+                if None in json_list:
+                    json_list.remove(None)
+                random_option_list.append(json_list)
+            random_option_list = sorted(set(itertools.chain.from_iterable(random_option_list)))
 
             query_item_data: str = """
                 SELECT item_id, description
@@ -147,7 +150,9 @@ def bokehro():
             if connection is not None:
                 connection.close()
 
-        df['color']=[refining_color_map[x] for x in df['refining']]
+        item_count = len(df)
+
+        df['color']=[refining_color_map[x] for x in df['refining_level']]
 
         # figure作成
         plot = figure(
@@ -156,29 +161,29 @@ def bokehro():
             y_axis_label='価格(Mz)',
             x_axis_type='datetime',
             tools=['box_zoom','reset','save'],
-            sizing_mode='stretch_both')
+            sizing_mode='stretch_width')
 
         # ベースにデータを配置
         plot.circle(
             source=df,
-            x='datetime',
-            y='unit_cost',
+            x='log_date',
+            y='unit_price',
             color='color',
-            size=8,
+            size=12,
             fill_alpha=0.5)
 
         hover = HoverTool(
             tooltips=[
                 ("ID", "@id"),
                 ("World", "@world"),
-                ("日時","@datetime{%F %R}"),
-                ("価格","@unit_cost"),
-                ("精錬値","@refining"),
-                ("カード","@cards"),
-                ("エンチャント","@enchants"),
-                ("オプション","@options")
+                ("Map", "@map_name"),
+                ("日時","@log_date{%F %R}"),
+                ("価格","@unit_price"),
+                ("精錬値","@refining_level"),
+                ("カード/エンチャント","@cards"),
+                ("ランダムオプション","@random_options")
                 ],
-            formatters={"@datetime":"datetime"}
+            formatters={"@log_date":"datetime"}
         )
         plot.add_tools(hover)
 
@@ -192,93 +197,61 @@ def bokehro():
     html = render_template(
         "bokehro.html",
         item_name=item_name,
-        item_count=len(df),
+        item_count=item_count,
         item_id=item_id,
         item_description=item_description,
-        is_card=is_card,
-        is_enchant=is_enchant,
         refinings=refinings,
-        enchant_list=enchant_list,
-        enchants=enchants,
-        option_list=option_list,
-        options=options,
+        card_enchant_list=card_enchant_list,
+        random_option_list=random_option_list,
+        card_enchants=card_enchants,
+        random_options=random_options,
         plot_script=plot_script,
         plot_div=plot_div,
         js_resources=js_resources,
-        css_resources=css_resources,
+        css_resources=css_resources
     )
     return html
 
 @app.route("/bokehro-export.<string:filetype>", methods=["GET", "POST"])
 def bokehro_export(filetype: str = "json"):
-    item_name: str           = request.args.get("name", default="")
-    is_card: str             = request.args.get("is_card", default="_all_")
-    is_enchant: str          = request.args.get("is_enchant", default="_all_")
-    is_option: str           = request.args.get("is_option", default="_all_")
-    is_round_cost: bool      = request.args.get("is_round_cost", default=True, type=bool)
-    refinings: list[int] = request.args.getlist("refining[]", type=int)
+    item_name: str            = request.args.get("name", default="", type=str)
+    refinings: list[int]      = request.args.getlist("refining[]", type=int)
 
-    enchants: list[str]   = request.args.getlist("enchant[]", type=str)
-    options: list[str]   = request.args.getlist("option[]", type=str)
+    card_enchants: list[str]  = request.args.getlist("card_enchant[]", type=str)
+    random_options: list[str] = request.args.getlist("random_option[]", type=str)
 
     # init
     connection = None
 
     df = None
 
-    if item_name is not None:
+    if item_name is not None and item_name != "":
         try:
-            connection = MySQLdb.connect(**args["mysql-ro"])
-            connection.autocommit(False)
+            connection = pymysql.connect(**args["mysql-ro"])
 
-            sql_unit_cost = "unit_cost/1000000"
-            if is_round_cost == False:
-                sql_unit_cost = "unit_cost"
-
-            query_item_detail: str = """
-                SELECT id, world, datetime, {:s} AS 'unit_cost', refining, cards, enchants, options
-                FROM item_detail_tbl
+            query_item_trade: str = """
+                SELECT id, item_name, log_date, unit_price, world, map_name, refining_level, cards, random_options
+                FROM item_trade_tbl
                 WHERE item_name = %(item_name)s
-            """.format(sql_unit_cost)
-
-            if is_card == "_all_":
-                pass
-            elif is_card == "_none_":
-                query_item_detail += " AND cards = '[]'"
-            elif is_card == "_required_":
-                query_item_detail += " AND cards != '[]'"
-
-            if is_enchant == "_all_":
-                pass
-            elif is_enchant == "_none_":
-                query_item_detail += " AND enchants = '[]'"
-            elif is_enchant == "_required_":
-                query_item_detail += " AND enchants != '[]'"
-
-            #if is_option == "_all_":
-            #    pass
-            #elif is_option == "_none_":
-            #    query_item_detail += " AND options = '[]'"
-            #elif is_option == "_required_":
-            #    query_item_detail += " AND options != '[]'"
+            """
 
             refinings = [value for value in refinings if isinstance(value, int) == True]
             if len(refinings) > 0:
-                query_item_detail += " AND refining IN({:s})".format(",".join(map(str, refinings)))
+                query_item_trade += " AND refining_level IN({:s})".format(",".join(map(str, refinings)))
 
-            if len(enchants) > 0:
-                for value in enchants:
-                    query_item_detail += " AND JSON_CONTAINS(enchants, '\"{:s}\"', '$')".format(
-                        connection.escape_string(value.replace("%","%%").encode("utf-8")).decode())
+            if len(card_enchants) > 0:
+                for value in card_enchants:
+                    query_item_trade += " AND JSON_CONTAINS(cards, '\"{:s}\"', '$')".format(
+                        connection.escape_string(value.replace("%","%%")))
 
-            if len(options) > 0:
-                for value in options:
-                    query_item_detail += " AND JSON_CONTAINS(options, '\"{:s}\"', '$')".format(
-                        connection.escape_string(value.replace("%","%%").encode("utf-8")).decode())
+            if len(random_options) > 0:
+                for value in random_options:
+                    query_item_trade += " AND JSON_CONTAINS(random_options, '\"{:s}\"', '$')".format(
+                        connection.escape_string(value.replace("%","%%")))
 
-            query_item_detail += " ORDER BY 1 ASC;"
+            query_item_trade += " ORDER BY 1 ASC;"
 
-            df = pd.read_sql(query_item_detail, connection, params={"item_name":item_name})
+            df = pd.read_sql(query_item_trade, connection, params={"item_name":item_name})
 
         except Exception as ex:
             raise ex
@@ -307,8 +280,7 @@ def bokehro_items():
     items: list = []
 
     try:
-        connection = MySQLdb.connect(**args["mysql-ro"])
-        connection.autocommit(False)
+        connection = pymysql.connect(**args["mysql-ro"])
 
         query_string = """
             SELECT item_name

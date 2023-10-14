@@ -26,8 +26,8 @@ def main(args: dict):
 
         query_select = """
             SELECT DISTINCT enchants
-            FROM item_detail_tbl
-            WHERE enchants != '[]';
+            FROM item_trade_tbl
+            WHERE cards != '[null, null, null, null]';
         """
 
         query_insert = """
@@ -47,7 +47,8 @@ def main(args: dict):
         enchant_list.sort()
 
         with connection.cursor() as cursor:
-            cursor.executemany(query_insert, enchant_list)
+            for enchant in enchant_list:
+                cursor.execute(query_insert, [enchant])
 
         connection.commit()
 

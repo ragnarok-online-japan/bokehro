@@ -128,41 +128,20 @@
                     {% endfor %}
                     </p>
                     <p>
+                    {% for value in card_enchant_list %}
                     <div class="form-check form-check-inline">
-                        カード:
-                        <select class="form-select" id="item-is-card">
-                            <option value="_all_" {% if is_card=="_all_" %}selected{% endif%}>絞らない(全て)</option>
-                            <option value="_none_" {% if is_card=="_none_" %}selected{% endif%}>カード無し</option>
-                            <option value="_required_" {% if is_card=="_required_" %}selected{% endif%}>カード有り</option>
-                        </select>
-                    </div>
-                    <!--
-                    <div class="form-check form-check-inline">
-                        エンチャント:
-                        <select class="form-select" id="item-is-enchant">
-                            <option value="_all_" {% if is_enchant=="_all_" %}selected{% endif%}>絞らない(全て)</option>
-                            <option value="_none_" {% if is_enchant=="_none_" %}selected{% endif%}>エンチャント無し</option>
-                            <option value="_required_" {% if is_enchant=="_required_" %}selected{% endif%}>エンチャント有り
-                            </option>
-                        </select>
-                    </div>
-                    -->
-                    </p>
-                    <p>
-                    {% for value in enchant_list %}
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" id="item-enchant-{{value|urlencode}}" name="enchant[]"
-                            value="{{value|e}}" {% if value in enchants %}checked="checked" {% endif %} />
-                        <label class="form-check-label" for="item-enchant-{{value|urlencode}}">{{value|e}}</label>
+                        <input class="form-check-input" type="checkbox" id="item-card-enchants-{{value|urlencode}}" name="card_enchants[]"
+                            value="{{value|e}}" {% if value in card_enchants %}checked="checked" {% endif %} />
+                        <label class="form-check-label" for="item-card-enchants-{{value|urlencode}}">{{value|e}}</label>
                     </div>
                     {% endfor %}
                     </p>
                     <p>
-                    {% for value in option_list %}
+                    {% for value in random_option_list %}
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" id="item-option-{{value|urlencode}}" name="option[]"
-                            value="{{value|e}}" {% if value in options %}checked="checked" {% endif %} />
-                        <label class="form-check-label" for="item-option-{{value|urlencode}}">{{value|e}}</label>
+                        <input class="form-check-input" type="checkbox" id="item-random-options-{{value|urlencode}}" name="random_options[]"
+                            value="{{value|e}}" {% if value in random_options %}checked="checked" {% endif %} />
+                        <label class="form-check-label" for="item-random-options-{{value|urlencode}}">{{value|e}}</label>
                     </div>
                     {% endfor %}
                     </p>
@@ -201,7 +180,7 @@
                     <div class="col-lg-3 col-md-6 align-items-stretch" data-aos="fade-up" data-aos-delay="100">
                         <div class="member">
                             <div class="member-img">
-                                <img src="https://rotool.gungho.jp/icon/{{item_id}}.png" class="img-fluid" alt="icon">
+                                <img src="https://rotool.gungho.jp/images/item/{{item_id}}.png" class="img-fluid" alt="icon">
                             </div>
                             <div>
                                 <h4>{{item_name}}</h4>
@@ -288,11 +267,9 @@
     <script type="text/javascript">
         var item_select = document.getElementById('item-select');
         var item_list = document.getElementById('item-list');
-        var item_is_card = document.getElementById('item-is-card');
-        var item_is_enchant = document.getElementById('item-is-enchant');
         var item_refinings = document.getElementsByName('refining[]');
-        var item_enchats = document.getElementsByName('enchant[]');
-        var item_options = document.getElementsByName('option[]');
+        var item_card_enchats = document.getElementsByName('card_enchants[]');
+        var item_random_options = document.getElementsByName('random_options[]');
         var item_plot = document.getElementById('item-plot-button');
         var item_export = document.getElementById('item-export-button');
 
@@ -317,14 +294,6 @@
             var item_name = item_select.value;
             if (item_name != undefined && item_name != "") {
                 request_params = "?name=" + item_name
-                if (item_is_card != undefined) {
-                    request_params += "&is_card=" + encodeURIComponent(item_is_card.value)
-                }
-                /*
-                if (item_is_enchant != undefined) {
-                    request_params += "&is_enchant=" + encodeURIComponent(item_is_enchant.value)
-                }
-                */
                 if (item_refinings != undefined) {
                     Array.prototype.forEach.call(item_refinings, function (data) {
                         if (data.checked) {
@@ -332,17 +301,17 @@
                         }
                     });
                 }
-                if (item_enchats != undefined) {
-                    Array.prototype.forEach.call(item_enchats, function (data) {
+                if (item_card_enchats != undefined) {
+                    Array.prototype.forEach.call(item_card_enchats, function (data) {
                         if (data.checked) {
-                            request_params += "&enchant[]=" + encodeURIComponent(data.value)
+                            request_params += "&card_enchants[]=" + encodeURIComponent(data.value)
                         }
                     });
                 }
-                if (item_options != undefined) {
-                    Array.prototype.forEach.call(item_options, function (data) {
+                if (item_random_options != undefined) {
+                    Array.prototype.forEach.call(item_random_options, function (data) {
                         if (data.checked) {
-                            request_params += "&option[]=" + encodeURIComponent(data.value)
+                            request_params += "&random_options[]=" + encodeURIComponent(data.value)
                         }
                     });
                 }
