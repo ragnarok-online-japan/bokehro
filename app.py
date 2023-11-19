@@ -62,8 +62,10 @@ def bokehro():
     card_enchant_list: list = []
     random_option_list: list = []
 
+    item_history_keys: list[str] = []
     try:
         redis_conn = redis.Redis(host="localhost", port=6379, db=0, encoding="utf-8")
+        item_history_keys = redis_conn.keys("*")
     except:
         pass
 
@@ -72,7 +74,8 @@ def bokehro():
             connection = pymysql.connect(**args["mysql-ro"])
 
             query_item_trade: str = """
-                SELECT id, log_date, unit_price/1000000 AS 'unit_price', world, map_name, refining_level, cards, random_options
+                SET STATEMENT max_statement_time=10
+                FOR SELECT id, log_date, unit_price/1000000 AS 'unit_price', world, map_name, refining_level, cards, random_options
                 FROM item_trade_tbl
                 WHERE item_name = %(item_name)s
             """
@@ -123,7 +126,8 @@ def bokehro():
             random_option_list = sorted(set(itertools.chain.from_iterable(random_option_list)))
 
             query_item_data: str = """
-                SELECT item_id, description
+                SET STATEMENT max_statement_time=1
+                FOR SELECT item_id, description
                 FROM item_data_tbl
                 WHERE item_name = %(item_name)s
                 AND slot = %(slot)s;
@@ -193,6 +197,9 @@ def bokehro():
     js_resources = resources_inline.render_js()
     css_resources = resources_inline.render_css()
 
+    for idx, item_name_bin in enumerate(item_history_keys):
+        item_history_keys[idx] = item_name_bin.decode("utf-8")
+
     # render template
     html = render_template(
         "bokehro.html",
@@ -208,7 +215,8 @@ def bokehro():
         plot_script=plot_script,
         plot_div=plot_div,
         js_resources=js_resources,
-        css_resources=css_resources
+        css_resources=css_resources,
+        item_history_keys=item_history_keys
     )
     return html
 
@@ -230,7 +238,8 @@ def bokehro_export(filetype: str = "json"):
             connection = pymysql.connect(**args["mysql-ro"])
 
             query_item_trade: str = """
-                SELECT id, item_name, log_date, unit_price, world, map_name, refining_level, cards, random_options
+                SET STATEMENT max_statement_time=10
+                FOR SELECT id, item_name, log_date, unit_price, world, map_name, refining_level, cards, random_options
                 FROM item_trade_tbl
                 WHERE item_name = %(item_name)s
             """
@@ -283,7 +292,8 @@ def bokehro_items():
         connection = pymysql.connect(**args["mysql-ro"])
 
         query_string = """
-            SELECT item_name
+            SET STATEMENT max_statement_time=10
+            FOR SELECT item_name
             FROM item_suggest_tbl
             ORDER BY 1 ASC
             ;
@@ -302,4 +312,4 @@ def bokehro_items():
     return jsonify(items)
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=8081, debug=True)
+    app.run(host='127.0.0.1', port=8081, debug=False)

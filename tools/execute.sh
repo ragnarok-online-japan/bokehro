@@ -2,6 +2,8 @@
 
 cd /opt/bokeh-ro/tools
 
+#------------------------------------------------------
+
 cat << '_EOL_' | mysql pigeon -upigeon -p${MYSQL_PIGEON_PASSWORD}
 DROP TABLE IF EXISTS item_suggest_tbl_tmp;
 CREATE TABLE item_suggest_tbl_tmp (item_name varchar(255), item_id bigint(1) UNSIGNED DEFAULT NULL, description TEXT DEFAULT NULL);
@@ -19,6 +21,7 @@ DROP TABLE item_suggest_tbl_delete;
 COMMIT;
 _EOL_
 
+#------------------------------------------------------
 
 cat << '_EOL_' | mysql pigeon -upigeon -p${MYSQL_PIGEON_PASSWORD}
 DROP TABLE IF EXISTS item_data_tbl_tmp;
@@ -35,18 +38,3 @@ RENAME TABLE item_data_tbl TO item_data_tbl_delete, item_data_tbl_tmp TO item_da
 DROP TABLE item_data_tbl_delete;
 COMMIT;
 _EOL_
-
-#cat << '_EOL_' | mysql pigeon -upigeon -p${MYSQL_PIGEON_PASSWORD}
-#DROP TABLE IF EXISTS item_enchant_tbl_tmp;
-#CREATE TABLE item_enchant_tbl_tmp (enchant varchar(255));
-#ALTER TABLE item_enchant_tbl_tmp ADD PRIMARY KEY (enchant);
-#_EOL_
-
-#./insert_enchant_names.py
-
-#cat << '_EOL_' | mysql pigeon -upigeon -p${MYSQL_PIGEON_PASSWORD}
-#BEGIN;
-#RENAME TABLE item_enchant_tbl TO item_enchant_tbl_delete, item_enchant_tbl_tmp TO item_enchant_tbl;
-#DROP TABLE item_enchant_tbl_delete;
-#COMMIT;
-#_EOL_

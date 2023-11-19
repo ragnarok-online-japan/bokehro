@@ -193,6 +193,28 @@
             </div>
         </section><!-- End Item Section -->
         {% endif %}
+
+        <section class="inner-page">
+            <div class="container" data-aos="fade-up">
+
+                <div class="section-title">
+                    <h2>Item search history</h2>
+                    <p></p>
+                </div>
+                <div class="row">
+                {% for item_name in item_history_keys %}
+                    <div class="col-lg-3 col-md-6 align-items-stretch" data-aos="fade-up" data-aos-delay="100">
+                        <div class="member">
+                            <div>
+                                <a href="?name={{item_name|e}}#plot">{{item_name}}</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+
+            </div>
+        </section>
     </main><!-- End #main -->
 
     <!-- ======= Footer ======= -->

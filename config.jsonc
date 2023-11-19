@@ -8,8 +8,8 @@
     },
     "mysql-ro": {
         "host": "localhost",
-        "user": "pigeon-readonly",
-        "passwd": "pigeon-readonly",
+        "user": "bokehro",
+        "passwd": "bokehro",
         "db": "pigeon",
         "charset": "utf8mb4"
     }
