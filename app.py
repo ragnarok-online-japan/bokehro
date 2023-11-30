@@ -58,6 +58,7 @@ def bokehro():
     item_count: int = 0
     item_id:int = None
     item_description: str = None
+    item_resname: str = None
     card_enchant_list: list = []
     random_option_list: list = []
 
@@ -126,7 +127,7 @@ def bokehro():
 
             query_item_data: str = """
                 SET STATEMENT max_statement_time=1
-                FOR SELECT item_id, description
+                FOR SELECT item_id, description, resname
                 FROM item_data_tbl
                 WHERE item_name = %(item_name)s
                 AND slot = %(slot)s;
@@ -144,6 +145,7 @@ def bokehro():
                 if item_row is not None:
                     item_id = item_row[0]
                     item_description = item_row[1]
+                    item_resname = str(item_row[2]).lower()
                     if item_description is not None:
                         item_description = item_description.replace("\n", "<br/>\n")
 
@@ -206,6 +208,7 @@ def bokehro():
         item_count=item_count,
         item_id=item_id,
         item_description=item_description,
+        item_resname=item_resname,
         refinings=refinings,
         card_enchant_list=card_enchant_list,
         random_option_list=random_option_list,
