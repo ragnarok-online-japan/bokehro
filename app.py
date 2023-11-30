@@ -11,10 +11,8 @@ from bokeh.embed import components
 from bokeh.models import HoverTool
 from bokeh.plotting import figure
 from bokeh.resources import INLINE as resources_inline
-from flask import (Flask, jsonify, make_response, render_template, request,
-                   send_file)
+from flask import (Flask, jsonify, make_response, render_template, request)
 from jsonc_parser.parser import JsoncParser
-import redis
 
 app = Flask(__name__, template_folder="templates")
 app.config["JSON_AS_ASCII"] = False
@@ -63,11 +61,11 @@ def bokehro():
     random_option_list: list = []
 
     item_history_keys: list[str] = []
-    try:
-        redis_conn = redis.Redis(host="localhost", port=6379, db=0, encoding="utf-8")
-        item_history_keys = redis_conn.keys("*")
-    except:
-        pass
+    #try:
+    #    redis_conn = redis.Redis(host="localhost", port=6379, db=0, encoding="utf-8")
+    #    item_history_keys = redis_conn.keys("*")
+    #except:
+    #    pass
 
     if item_name is not None and item_name != "":
         try:
@@ -98,16 +96,16 @@ def bokehro():
 
             df = pd.read_sql(sql=query_item_trade, con=connection, params={"item_name":item_name})
 
-            if len(df) > 0:
-                try:
-                    count = redis_conn.get(item_name.encode("utf-8"))
-                    if count is None:
-                        count = 1
-                    else:
-                        count = int(count) + 1
-                    redis_conn.set(item_name, count, keepttl=(60*60*24))
-                except:
-                    pass
+            #if len(df) > 0:
+            #    try:
+            #        count = redis_conn.get(item_name.encode("utf-8"))
+            #        if count is None:
+            #            count = 1
+            #        else:
+            #            count = int(count) + 1
+            #        redis_conn.set(item_name, count, keepttl=(60*60*24))
+            #    except:
+            #        pass
 
             for value in df["cards"].to_list():
                 json_list = json.loads(value)
@@ -312,4 +310,4 @@ def bokehro_items():
     return jsonify(items)
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=8081, debug=False)
+    app.run(host='127.0.0.1', port=8081, debug=True)
