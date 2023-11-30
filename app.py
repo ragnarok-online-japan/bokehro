@@ -13,6 +13,7 @@ from bokeh.plotting import figure
 from bokeh.resources import INLINE as resources_inline
 from flask import (Flask, jsonify, make_response, render_template, request)
 from jsonc_parser.parser import JsoncParser
+#import redis
 
 app = Flask(__name__, template_folder="templates")
 app.config["JSON_AS_ASCII"] = False
