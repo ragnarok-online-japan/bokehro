@@ -6,7 +6,11 @@ cd /opt/bokeh-ro/tools
 
 cat << '_EOL_' | mysql pigeon -upigeon -p${MYSQL_PIGEON_PASSWORD}
 DROP TABLE IF EXISTS item_suggest_tbl_tmp;
-CREATE TABLE item_suggest_tbl_tmp (item_name varchar(255), item_id bigint(1) UNSIGNED DEFAULT NULL, description TEXT DEFAULT NULL);
+CREATE TABLE item_suggest_tbl_tmp (
+    item_name varchar(255),
+    item_id bigint(1) UNSIGNED DEFAULT NULL,
+    description TEXT DEFAULT NULL
+);
 INSERT INTO item_suggest_tbl_tmp(item_name) SELECT DISTINCT item_name FROM item_trade_tbl ORDER BY 1;
 _EOL_
 
@@ -24,7 +28,14 @@ _EOL_
 
 cat << '_EOL_' | mysql pigeon -upigeon -p${MYSQL_PIGEON_PASSWORD}
 DROP TABLE IF EXISTS item_data_tbl_tmp;
-CREATE TABLE item_data_tbl_tmp (item_id bigint(1) UNSIGNED DEFAULT NULL, item_name varchar(255), slot int(1) UNSIGNED DEFAULT NULL, description TEXT DEFAULT NULL, resname varchar(255) DEFAULT NULL);
+CREATE TABLE item_data_tbl_tmp (
+    item_id bigint(1) UNSIGNED DEFAULT NULL,
+    item_name varchar(255),
+    slot int(1) UNSIGNED DEFAULT NULL,
+    description TEXT DEFAULT NULL,
+    resname varchar(255) DEFAULT NULL,
+    cardillustname varchar(255) DEFAULT NULL
+);
 _EOL_
 
 ./insert_itemdata.py --import-items /var/www/html_rodb/ROOF/items.json

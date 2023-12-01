@@ -37,8 +37,8 @@ def main(args: dict):
         connection.autocommit(False)
 
         query_insert = """
-            INSERT INTO item_data_tbl_tmp(item_name, item_id, slot, description, resname)
-            VALUES(%s, %s, %s, %s, %s)
+            INSERT INTO item_data_tbl_tmp(item_name, item_id, slot, description, resname, cardillustname)
+            VALUES(%s, %s, %s, %s, %s, %s)
             ;
         """
 
@@ -48,10 +48,16 @@ def main(args: dict):
             item_name: str = values["displayname"]
             description: str = values["description"]
             resname: str = values["resname"]
+
+            cardillustname: str = None
+            if "cardillustname" in values:
+                cardillustname = values["cardillustname"]
+
             slot: int = 0
             if "slot" in values:
                 slot = values["slot"]
-            item_ids.append((item_name, item_id, slot, description, resname))
+
+            item_ids.append((item_name, item_id, slot, description, resname, cardillustname))
 
         with connection.cursor() as cursor:
             cursor.executemany(query_insert, item_ids)
