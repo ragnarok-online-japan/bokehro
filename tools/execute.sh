@@ -14,7 +14,7 @@ CREATE TABLE item_suggest_tbl_tmp (
 INSERT INTO item_suggest_tbl_tmp(item_name) SELECT DISTINCT item_name FROM item_trade_tbl ORDER BY 1;
 _EOL_
 
-./attachment_item_id.py --import-items /var/www/html_rodb/ROOF/items.json
+./attachment_item_id.py --import-items /var/www/html_rodb/ROOD/items.json
 
 cat << '_EOL_' | mysql pigeon -upigeon -p${MYSQL_PIGEON_PASSWORD}
 ALTER TABLE item_suggest_tbl_tmp ADD PRIMARY KEY (item_name);
@@ -38,7 +38,7 @@ CREATE TABLE item_data_tbl_tmp (
 );
 _EOL_
 
-./insert_itemdata.py --import-items /var/www/html_rodb/ROOF/items.json
+./insert_itemdata.py --import-items /var/www/html_rodb/ROOD/items.json
 
 cat << '_EOL_' | mysql pigeon -upigeon -p${MYSQL_PIGEON_PASSWORD}
 ALTER TABLE item_data_tbl_tmp ADD PRIMARY KEY (item_id);

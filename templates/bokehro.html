@@ -20,7 +20,8 @@
     <meta property="og:description" content="Bokeh ROはROのアイテム露店販売履歴をグラフ描画するサービスです" />
     <meta property="og:type" content="article" />
     {% if item_resname != None %}
-    <meta property="og:image" content="https://rotool.gungho.jp/images/item/{{item_resname}}.png">
+    <!-- <meta property="og:image" content="https://rotool.gungho.jp/images/item/{{item_resname}}.png"> -->
+    <meta property="og:image" content="https://rodb.aws.0nyx.net/ROOD/items/{{item_resname}}.png">
     {% else %}
     <meta property="og:image" content="{{request.host_url|replace('http://', 'https://')}}favicon.png">
     {% endif %}
@@ -180,7 +181,7 @@
                     <div class="col-lg-3 col-md-6 align-items-stretch" data-aos="fade-up" data-aos-delay="100">
                         <div class="member">
                             <div class="member-img">
-                                <img src="https://rotool.gungho.jp/images/item/{{item_resname}}.png" class="img-fluid" alt="icon">
+                                <img src="https://rodb.aws.0nyx.net/ROOD/items/{{item_resname}}.png" class="img-fluid" alt="icon">
                             </div>
                             <div>
                                 <h4>{{item_name}}</h4>
