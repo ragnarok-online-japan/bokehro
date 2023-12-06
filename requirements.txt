@@ -1,6 +1,7 @@
 SQLAlchemy
 bokeh
 flask
+flask-cors
 jsonc-parser
 mysqlclient
 pandas
