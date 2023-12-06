@@ -202,8 +202,8 @@ def bokehro():
     js_resources = resources_inline.render_js()
     css_resources = resources_inline.render_css()
 
-    for idx, item_name_bin in enumerate(item_history_keys):
-        item_history_keys[idx] = item_name_bin.decode("utf-8")
+    #for idx, item_name_bin in enumerate(item_history_keys):
+    #    item_history_keys[idx] = item_name_bin.decode("utf-8")
 
     # render template
     html = render_template(
@@ -225,6 +225,151 @@ def bokehro():
         item_history_keys=item_history_keys
     )
     return html
+
+@app.route("/bokehro-webtool", methods=["GET", "POST"])
+def bokehro_webtool():
+    item_name: str            = request.args.get("name", default="", type=str)
+    refinings: list[int]      = request.args.getlist("refining[]", type=int)
+
+    card_enchants: list[str]  = request.args.getlist("card_enchants[]", type=str)
+    random_options: list[str] = request.args.getlist("random_options[]", type=str)
+
+    # init
+    connection = None
+    plot = None
+    plot_script: str = ""
+    plot_div: str = ""
+
+    refining_color_map={
+        0:   "black",
+        1:   "black",
+        2:   "black",
+        3:   "black",
+        4:   "black",
+        5:   "blue",
+        6:   "blue",
+        7:   "green",
+        8:   "green",
+        9:   "orange",
+        10:  "red",
+        None:"gray"
+    }
+
+    df = None
+    item_count: int = 0
+    item_id:int = None
+    item_description: str = None
+    item_resname: str = None
+    card_enchant_list: list = []
+    random_option_list: list = []
+
+    item_history_keys: list[str] = []
+    #try:
+    #    redis_conn = redis.Redis(host="localhost", port=6379, db=0, encoding="utf-8")
+    #    item_history_keys = redis_conn.keys("*")
+    #except:
+    #    pass
+
+    if item_name is not None and item_name != "":
+        try:
+            connection = pymysql.connect(**args["mysql-ro"])
+
+            query_item_trade: str = """
+                SET STATEMENT max_statement_time=10
+                FOR SELECT id, log_date, unit_price/1000000 AS 'unit_price', world, map_name, refining_level, cards, random_options
+                FROM item_trade_tbl
+                WHERE item_name = %(item_name)s
+            """
+
+            refinings = [value for value in refinings if isinstance(value, int) == True]
+            if len(refinings) > 0:
+                query_item_trade += " AND refining_level IN({:s})".format(",".join(map(str, refinings)))
+
+            if len(card_enchants) > 0:
+                for value in card_enchants:
+                    query_item_trade += " AND JSON_CONTAINS(cards, '\"{:s}\"', '$')".format(
+                        connection.escape_string(value.replace("%","%%")))
+
+            if len(random_options) > 0:
+                for value in random_options:
+                    query_item_trade += " AND JSON_CONTAINS(random_options, '\"{:s}\"', '$')".format(
+                        connection.escape_string(value.replace("%","%%")))
+
+            query_item_trade += " ORDER BY 1 ASC;"
+
+            df = pd.read_sql(sql=query_item_trade, con=connection, params={"item_name":item_name})
+
+        except Exception as ex:
+            raise ex
+        finally:
+            if connection is not None:
+                connection.close()
+
+        item_count = len(df)
+
+        df['color']=[refining_color_map[x] for x in df['refining_level']]
+
+        # figure作成
+        plot = figure(
+            title=item_name,
+            x_axis_label='日付',
+            y_axis_label='価格(Mz)',
+            x_axis_type='datetime',
+            tools=['box_zoom','reset','save'],
+            sizing_mode='stretch_width')
+
+        # ベースにデータを配置
+        plot.circle(
+            source=df,
+            x='log_date',
+            y='unit_price',
+            color='color',
+            size=12,
+            fill_alpha=0.5)
+
+        hover = HoverTool(
+            tooltips=[
+                ("ID", "@id"),
+                ("World", "@world"),
+                ("Map", "@map_name"),
+                ("日時","@log_date{%F %R}"),
+                ("価格","@unit_price"),
+                ("精錬値","@refining_level"),
+                ("カード/エンチャント","@cards"),
+                ("ランダムオプション","@random_options")
+                ],
+            formatters={"@log_date":"datetime"}
+        )
+        plot.add_tools(hover)
+
+        plot_script, plot_div = components(plot)
+
+    response = None
+    response_body: dict = {
+        "success" : False,
+        "request" : {
+            "item_name" : item_name,
+            "refinings" : refinings
+        }
+    }
+    if df is not None:
+        response_body = {
+            "success" : True,
+            "request" : {
+                "item_name" : item_name,
+                "refinings" : refinings
+            },
+            "plot_script": plot_script,
+            "plot_div": plot_div,
+            "resouce_js": resources_inline.render_js(),
+            "resouce_css": resources_inline.render_css()
+        }
+
+    response = make_response(json.dumps(response_body))
+    response.headers["Content-Disposition"] = "inline; filename=export.json"
+    response.mimetype = "application/json"
+
+    return response
 
 @app.route("/bokehro-export.<string:filetype>", methods=["GET", "POST"])
 def bokehro_export(filetype: str = "json"):
@@ -281,12 +426,12 @@ def bokehro_export(filetype: str = "json"):
         if filetype == "json":
             buffer.write(df.to_json())
             response = make_response(buffer.getvalue())
-            response.headers["Content-Disposition"] = "attachment; filename=bokehro.json"
+            response.headers["Content-Disposition"] = "attachment; filename=export.json"
             response.mimetype = "application/json"
         elif filetype == "csv":
             buffer.write(df.to_csv())
             response = make_response(buffer.getvalue())
-            response.headers["Content-Disposition"] = "attachment; filename=bokehro.csv"
+            response.headers["Content-Disposition"] = "attachment; filename=export.csv"
             response.mimetype = "text/csv"
     return response
 
