@@ -244,7 +244,7 @@ def bokehro():
     return html
 
 @app.route("/bokehro-export-img")
-def bokeh_export_img():
+def bokehro_export_img():
     item_name: str            = request.args.get("name", default="", type=str)
     refinings: list[int]      = request.args.getlist("refining[]", type=int)
 
@@ -253,8 +253,6 @@ def bokeh_export_img():
 
     # init
     connection = None
-
-    export_svg = None
 
     if item_name is not None and item_name != "":
         try:
@@ -295,11 +293,11 @@ def bokeh_export_img():
         # figure作成
         plot = figure(
             title=item_name,
-            x_axis_label='date',
-            y_axis_label='price(Mz)',
+            x_axis_label='日付',
+            y_axis_label='価格(Mz)',
             x_axis_type='datetime',
-            sizing_mode='stretch_width',
-            output_backend="svg")
+            tools=[]
+        )
 
         # ベースにデータを配置
         plot.circle(
@@ -314,9 +312,8 @@ def bokeh_export_img():
             options = webdriver.ChromeOptions()
             options.add_argument("--headless")
             options.add_argument("--disable-gpu")
-            options.add_argument("--window-size=1280x720")
             driver = webdriver.Chrome(options)
-            export_png(plot, filename=temp.name, webdriver=driver)
+            export_png(plot, filename=temp.name, webdriver=driver, width=1280, height=720)
 
             return send_file(temp.name, mimetype="image/png", as_attachment=True, download_name=f"bokehro_{item_name}.png")
 
