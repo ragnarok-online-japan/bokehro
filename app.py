@@ -2,8 +2,11 @@
 
 import itertools
 import json
+import os
 import re
 from io import StringIO
+import tempfile
+from urllib.parse import quote_plus
 
 import pandas as pd
 import pymysql
@@ -11,9 +14,11 @@ from bokeh.embed import components
 from bokeh.models import HoverTool
 from bokeh.plotting import figure
 from bokeh.resources import CDN, INLINE as resources_inline
-from flask import (Flask, jsonify, make_response, render_template, request)
+from bokeh.io import export_png
+from flask import (Flask, Response, jsonify, make_response, render_template, request, send_file)
 from flask_cors import CORS
 from jsonc_parser.parser import JsoncParser
+from selenium import webdriver
 #import redis
 
 app = Flask(__name__, template_folder="templates")
@@ -30,6 +35,20 @@ CORS(app,
      }
 )
 
+refining_color_map={
+    0:   "black",
+    1:   "black",
+    2:   "black",
+    3:   "black",
+    4:   "black",
+    5:   "blue",
+    6:   "blue",
+    7:   "green",
+    8:   "green",
+    9:   "orange",
+    10:  "red",
+    None:"gray"
+}
 
 args: dict = {}
 try:
@@ -51,21 +70,6 @@ def bokehro():
     plot = None
     plot_script: str = ""
     plot_div: str = ""
-
-    refining_color_map={
-        0:   "black",
-        1:   "black",
-        2:   "black",
-        3:   "black",
-        4:   "black",
-        5:   "blue",
-        6:   "blue",
-        7:   "green",
-        8:   "green",
-        9:   "orange",
-        10:  "red",
-        None:"gray"
-    }
 
     df = None
     item_count: int = 0
@@ -239,8 +243,88 @@ def bokehro():
     )
     return html
 
+@app.route("/bokehro-export-img")
+def bokeh_export_img():
+    item_name: str            = request.args.get("name", default="", type=str)
+    refinings: list[int]      = request.args.getlist("refining[]", type=int)
+
+    card_enchants: list[str]  = request.args.getlist("card_enchants[]", type=str)
+    random_options: list[str] = request.args.getlist("random_options[]", type=str)
+
+    # init
+    connection = None
+
+    export_svg = None
+
+    if item_name is not None and item_name != "":
+        try:
+            connection = pymysql.connect(**args["mysql-ro"])
+            query_item_trade: str = """
+                SET STATEMENT max_statement_time=10
+                FOR SELECT id, log_date, unit_price/1000000 AS 'unit_price', world, map_name, refining_level, cards, random_options
+                FROM item_trade_tbl
+                WHERE item_name = %(item_name)s
+            """
+
+            refinings = [value for value in refinings if isinstance(value, int) == True]
+            if len(refinings) > 0:
+                query_item_trade += " AND refining_level IN({:s})".format(",".join(map(str, refinings)))
+
+            if len(card_enchants) > 0:
+                for value in card_enchants:
+                    query_item_trade += " AND JSON_CONTAINS(cards, '\"{:s}\"', '$')".format(
+                        connection.escape_string(value.replace("%","%%")))
+
+            if len(random_options) > 0:
+                for value in random_options:
+                    query_item_trade += " AND JSON_CONTAINS(random_options, '\"{:s}\"', '$')".format(
+                        connection.escape_string(value.replace("%","%%")))
+
+            query_item_trade += " ORDER BY 1 ASC;"
+
+            df = pd.read_sql(sql=query_item_trade, con=connection, params={"item_name":item_name})
+
+        except Exception as ex:
+            raise ex
+        finally:
+            if connection is not None:
+                connection.close()
+
+        df['color']=[refining_color_map[x] for x in df['refining_level']]
+
+        # figure作成
+        plot = figure(
+            title=item_name,
+            x_axis_label='date',
+            y_axis_label='price(Mz)',
+            x_axis_type='datetime',
+            sizing_mode='stretch_width',
+            output_backend="svg")
+
+        # ベースにデータを配置
+        plot.circle(
+            source=df,
+            x='log_date',
+            y='unit_price',
+            color='color',
+            size=12,
+            fill_alpha=0.5)
+
+        with tempfile.NamedTemporaryFile(delete=True, suffix=".png") as temp:
+            options = webdriver.ChromeOptions()
+            options.add_argument("--headless")
+            options.add_argument("--disable-gpu")
+            options.add_argument("--window-size=1280x720")
+            driver = webdriver.Chrome(options)
+            export_png(plot, filename=temp.name, webdriver=driver)
+
+            return send_file(temp.name, mimetype="image/png", as_attachment=True, download_name=f"bokehro_{item_name}.png")
+
+    # other
+    return Response(status=404)
+
 @app.route("/bokehro-check", methods=["GET", "POST"])
-def bokeh_resources():
+def bokehro_check():
     item_name: str            = request.args.get("name", default="", type=str)
     refinings: list[int]      = request.args.getlist("refining[]", type=int)
 
@@ -255,6 +339,31 @@ def bokeh_resources():
     if item_name is not None and item_name != "":
         try:
             connection = pymysql.connect(**args["mysql-ro"])
+
+            query_item_trade: str = """
+                SET STATEMENT max_statement_time=10
+                FOR SELECT id
+                FROM item_trade_tbl
+                WHERE item_name = %(item_name)s
+            """
+
+            refinings = [value for value in refinings if isinstance(value, int) == True]
+            if len(refinings) > 0:
+                query_item_trade += " AND refining_level IN({:s})".format(",".join(map(str, refinings)))
+
+            if len(card_enchants) > 0:
+                for value in card_enchants:
+                    query_item_trade += " AND JSON_CONTAINS(cards, '\"{:s}\"', '$')".format(
+                        connection.escape_string(value.replace("%","%%")))
+
+            if len(random_options) > 0:
+                for value in random_options:
+                    query_item_trade += " AND JSON_CONTAINS(random_options, '\"{:s}\"', '$')".format(
+                        connection.escape_string(value.replace("%","%%")))
+
+            query_item_trade += " ORDER BY 1 ASC;"
+
+            df = pd.read_sql(sql=query_item_trade, con=connection, params={"item_name":item_name})
 
             query_item_data: str = """
                 SET STATEMENT max_statement_time=1
@@ -284,24 +393,21 @@ def bokeh_resources():
 
     response = None
     response_body: dict = {
-        "success" : False,
+        "success" : True,
         "request" : {
             "item_name" : item_name,
             "refinings" : refinings
-        }
+        },
+        "item_id": item_id
     }
-    if item_id is not None:
-        response_body = {
-            "success" : True,
-            "request" : {
-                "item_name" : item_name,
-                "refinings" : refinings
-            },
-            "item_id": item_id
-        }
+
+    if df is not None and len(df) > 0:
+        response_body["export_img_url"] = f"https://{request.host}/bokehro-export-img?name=" + quote_plus(item_name)
+    else:
+        response_body["export_img_url"] = f"https://{request.host}/assets/img/404_notfound.jpg"
 
     response = make_response(json.dumps(response_body))
-    response.headers["Content-Disposition"] = "inline; filename=webtool.json"
+    response.headers["Content-Disposition"] = "inline; filename=check.json"
     response.mimetype = "application/json"
 
     return response

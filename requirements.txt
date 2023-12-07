@@ -1,5 +1,6 @@
 SQLAlchemy
 bokeh
+chromedriver-binary==120.0.*
 flask
 flask-cors
 jsonc-parser
@@ -7,3 +8,4 @@ mysqlclient
 pandas
 redis
 redis-cli
+selenium
