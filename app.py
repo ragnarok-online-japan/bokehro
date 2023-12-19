@@ -84,12 +84,8 @@ def bokehro(item_id: int = None):
                 SET STATEMENT max_statement_time=10
                 FOR SELECT id, item_id, log_date, unit_price/1000000 AS 'unit_price', world, map_name, refining_level, cards, random_options
                 FROM item_trade_tbl
+                WHERE item_id = %(item_id)s
             """
-
-            if item_id is not None and item_id > 0:
-                query_item_trade += " WHERE item_id = %(item_id)s"
-            else:
-                query_item_trade += " WHERE item_name = %(item_name)s"
 
             refinings = [value for value in refinings if isinstance(value, int) == True]
             if len(refinings) > 0:
@@ -107,7 +103,7 @@ def bokehro(item_id: int = None):
 
             query_item_trade += " ORDER BY 1 ASC;"
 
-            df = pd.read_sql(sql=query_item_trade, con=connection, params={"item_id": item_id, "item_name": item_name})
+            df = pd.read_sql(sql=query_item_trade, con=connection, params={"item_id": item_id})
 
             for value in df["cards"].to_list():
                 json_list = json.loads(value)
@@ -318,7 +314,7 @@ def bokehro_export_img(item_id: int = None):
 
             query_item_data: str = """
                 SET STATEMENT max_statement_time=1
-                FOR SELECT item_id, item_name
+                FOR SELECT item_id, item_name, slot
                 FROM item_data_tbl
                 WHERE item_id = %(item_id)s
             """
@@ -328,6 +324,12 @@ def bokehro_export_img(item_id: int = None):
                 item_row = cursor.fetchone()
                 if item_row is not None:
                     item_name = item_row[1]
+                    slot = item_row[2]
+
+                    if slot is not None and slot > 0:
+                        item_name = f"{item_row[1]}[{slot}]"
+                    else:
+                        item_name = item_row[1]
 
         except Exception as ex:
             raise ex
@@ -417,7 +419,7 @@ def bokehro_check(item_id: int = None):
             if item_id is not None:
                 query_item_data: str = """
                     SET STATEMENT max_statement_time=1
-                    FOR SELECT item_id, item_name
+                    FOR SELECT item_id, item_name, slot
                     FROM item_data_tbl
                     WHERE item_id = %(item_id)s
                 """
@@ -427,7 +429,12 @@ def bokehro_check(item_id: int = None):
                     item_row = cursor.fetchone()
                     if item_row is not None:
                         item_id = item_row[0]
-                        item_name = item_row[1]
+                        slot = item_row[2]
+
+                        if slot is not None and slot > 0:
+                            item_name = f"{item_row[1]}[{slot}]"
+                        else:
+                            item_name = item_row[1]
 
         except Exception as ex:
             raise ex
@@ -450,7 +457,7 @@ def bokehro_check(item_id: int = None):
     else:
         response_body["export_img_url"] = f"https://{request.host}/assets/img/404_notfound.jpg"
 
-    response = make_response(json.dumps(response_body))
+    response = make_response(json.dumps(response_body, ensure_ascii=False))
     response.headers["Content-Disposition"] = "inline; filename=check.json"
     response.mimetype = "application/json"
 
