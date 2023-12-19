@@ -2,9 +2,8 @@
 
 import itertools
 import json
-import os
-import re
 from io import StringIO
+import re
 import tempfile
 from urllib.parse import quote_plus
 
@@ -15,7 +14,7 @@ from bokeh.models import HoverTool
 from bokeh.plotting import figure
 from bokeh.resources import CDN, INLINE as resources_inline
 from bokeh.io import export_png
-from flask import (Flask, Response, jsonify, make_response, render_template, request, send_file)
+from flask import (Flask, Response, jsonify, make_response, redirect, render_template, request, send_file, url_for)
 from flask_cors import CORS
 from jsonc_parser.parser import JsoncParser
 from selenium import webdriver
@@ -57,13 +56,11 @@ except Exception as ex:
     print("[FATAL]", ex)
     raise ex
 
-@app.route("/bokehro", methods=["GET", "POST"])
-def bokehro():
-    item_name: str            = request.args.get("name", default="", type=str)
-    refinings: list[int]      = request.args.getlist("refining[]", type=int)
-
-    card_enchants: list[str]  = request.args.getlist("card_enchants[]", type=str)
-    random_options: list[str] = request.args.getlist("random_options[]", type=str)
+@app.route("/bokehro/<int:item_id>")
+def bokehro(item_id: int = None):
+    refinings: list[int]      = request.args.getlist("refining", type=int)
+    card_enchants: list[str]  = request.args.getlist("card_enchants", type=str)
+    random_options: list[str] = request.args.getlist("random_options", type=str)
 
     # init
     connection = None
@@ -73,29 +70,26 @@ def bokehro():
 
     df = None
     item_count: int = 0
-    item_id:int = None
+    item_name: str = ""
     item_description: str = None
     item_resname: str = None
     card_enchant_list: list = []
     random_option_list: list = []
 
-    item_history_keys: list[str] = []
-    #try:
-    #    redis_conn = redis.Redis(host="localhost", port=6379, db=0, encoding="utf-8")
-    #    item_history_keys = redis_conn.keys("*")
-    #except:
-    #    pass
-
-    if item_name is not None and item_name != "":
+    if item_id is not None and item_id > 0:
         try:
             connection = pymysql.connect(**args["mysql-ro"])
 
             query_item_trade: str = """
                 SET STATEMENT max_statement_time=10
-                FOR SELECT id, log_date, unit_price/1000000 AS 'unit_price', world, map_name, refining_level, cards, random_options
+                FOR SELECT id, item_id, log_date, unit_price/1000000 AS 'unit_price', world, map_name, refining_level, cards, random_options
                 FROM item_trade_tbl
-                WHERE item_name = %(item_name)s
             """
+
+            if item_id is not None and item_id > 0:
+                query_item_trade += " WHERE item_id = %(item_id)s"
+            else:
+                query_item_trade += " WHERE item_name = %(item_name)s"
 
             refinings = [value for value in refinings if isinstance(value, int) == True]
             if len(refinings) > 0:
@@ -113,18 +107,7 @@ def bokehro():
 
             query_item_trade += " ORDER BY 1 ASC;"
 
-            df = pd.read_sql(sql=query_item_trade, con=connection, params={"item_name":item_name})
-
-            #if len(df) > 0:
-            #    try:
-            #        count = redis_conn.get(item_name.encode("utf-8"))
-            #        if count is None:
-            #            count = 1
-            #        else:
-            #            count = int(count) + 1
-            #        redis_conn.set(item_name, count, keepttl=(60*60*24))
-            #    except:
-            #        pass
+            df = pd.read_sql(sql=query_item_trade, con=connection, params={"item_id": item_id, "item_name": item_name})
 
             for value in df["cards"].to_list():
                 json_list = json.loads(value)
@@ -142,29 +125,29 @@ def bokehro():
                 random_option_list.append(json_list)
             random_option_list = sorted(set(itertools.chain.from_iterable(random_option_list)))
 
+            if item_id is None and len(df) > 0:
+                item_id = df["item_id"][0]
+
             query_item_data: str = """
                 SET STATEMENT max_statement_time=1
-                FOR SELECT item_id, description, cardillustname
+                FOR SELECT item_name, slot, description, cardillustname
                 FROM item_data_tbl
-                WHERE item_name = %(item_name)s
-                AND slot = %(slot)s;
+                WHERE item_id = %(item_id)s
             """
-            item_search_name: str = item_name
-            slot: int = 0
-            match = re.match(r"^(.+)\[([0-9])\]$", item_name)
-            if match:
-                item_search_name = match.group(1)
-                slot = int(match.group(2))
 
             with connection.cursor() as cursor:
-                cursor.execute(query_item_data, {"item_name":item_search_name, "slot":slot})
+                cursor.execute(query_item_data, {"item_id":item_id})
                 item_row = cursor.fetchone()
                 if item_row is not None:
-                    item_id = item_row[0]
-                    item_description = item_row[1]
+                    slot: int = item_row[1]
+                    if slot is not None and slot > 0:
+                        item_name = f"{item_row[0]}[{slot}]"
+                    else:
+                        item_name = item_row[0]
+                    item_description = item_row[2]
 
                     item_resname = f"{item_id:d}"
-                    if item_row[2] is not None:
+                    if item_row[3] is not None:
                         item_resname = f"{item_id:d}_cardillust"
 
                     if item_description is not None:
@@ -225,9 +208,9 @@ def bokehro():
     # render template
     html = render_template(
         "bokehro.html",
+        item_id=item_id,
         item_name=item_name,
         item_count=item_count,
-        item_id=item_id,
         item_description=item_description,
         item_resname=item_resname,
         refinings=refinings,
@@ -238,30 +221,81 @@ def bokehro():
         plot_script=plot_script,
         plot_div=plot_div,
         js_resources=js_resources,
-        css_resources=css_resources,
-        item_history_keys=item_history_keys
+        css_resources=css_resources
     )
     return html
 
-@app.route("/bokehro-export-img")
-def bokehro_export_img():
+@app.route("/bokehro")
+def bokehro_top():
     item_name: str            = request.args.get("name", default="", type=str)
     refinings: list[int]      = request.args.getlist("refining[]", type=int)
-
     card_enchants: list[str]  = request.args.getlist("card_enchants[]", type=str)
     random_options: list[str] = request.args.getlist("random_options[]", type=str)
+
+    item_count: int = 0
+
+    if item_name != "":
+        item_id: int = None
+        try:
+            connection = pymysql.connect(**args["mysql-ro"])
+
+            query_item_data: str = """
+                SET STATEMENT max_statement_time=1
+                FOR SELECT item_id
+                FROM item_data_tbl
+                WHERE item_name = %(item_name)s
+                AND slot = %(slot)s
+            """
+
+            item_search_name: str = item_name
+            slot: int = 0
+            match = re.match(r"^(.+)\[([0-9])\]$", item_name)
+            if match:
+                item_search_name = match.group(1)
+                slot = int(match.group(2))
+
+            with connection.cursor() as cursor:
+                cursor.execute(query_item_data, {"item_name": item_search_name, "slot": slot})
+                item_row = cursor.fetchone()
+                if item_row is not None:
+                    item_id = item_row[0]
+
+        except Exception as ex:
+            raise ex
+        finally:
+            if connection is not None:
+                connection.close()
+
+        if item_id is not None:
+            return redirect(url_for("bokehro", item_id=item_id))
+
+    # render template
+    html = render_template(
+        "bokehro.html",
+        item_id=None,
+        item_name=item_name,
+        item_count=item_count
+    )
+    return html
+
+@app.route("/bokehro-export-img/<int:item_id>")
+def bokehro_export_img(item_id: int = None):
+    refinings: list[int]      = request.args.getlist("refining", type=int)
+    card_enchants: list[str]  = request.args.getlist("card_enchants", type=str)
+    random_options: list[str] = request.args.getlist("random_options", type=str)
 
     # init
     connection = None
 
-    if item_name is not None and item_name != "":
+    if item_id is not None and item_id > 0:
+        item_name: str = ""
         try:
             connection = pymysql.connect(**args["mysql-ro"])
             query_item_trade: str = """
                 SET STATEMENT max_statement_time=10
                 FOR SELECT id, log_date, unit_price/1000000 AS 'unit_price', world, map_name, refining_level, cards, random_options
                 FROM item_trade_tbl
-                WHERE item_name = %(item_name)s
+                WHERE item_id = %(item_id)s
             """
 
             refinings = [value for value in refinings if isinstance(value, int) == True]
@@ -280,7 +314,20 @@ def bokehro_export_img():
 
             query_item_trade += " ORDER BY 1 ASC;"
 
-            df = pd.read_sql(sql=query_item_trade, con=connection, params={"item_name":item_name})
+            df = pd.read_sql(sql=query_item_trade, con=connection, params={"item_id":item_id})
+
+            query_item_data: str = """
+                SET STATEMENT max_statement_time=1
+                FOR SELECT item_id, item_name
+                FROM item_data_tbl
+                WHERE item_id = %(item_id)s
+            """
+
+            with connection.cursor() as cursor:
+                cursor.execute(query_item_data, {"item_id":item_id})
+                item_row = cursor.fetchone()
+                if item_row is not None:
+                    item_name = item_row[1]
 
         except Exception as ex:
             raise ex
@@ -320,29 +367,31 @@ def bokehro_export_img():
     # other
     return Response(status=404)
 
-@app.route("/bokehro-check", methods=["GET", "POST"])
-def bokehro_check():
-    item_name: str            = request.args.get("name", default="", type=str)
-    refinings: list[int]      = request.args.getlist("refining[]", type=int)
-
-    card_enchants: list[str]  = request.args.getlist("card_enchants[]", type=str)
-    random_options: list[str] = request.args.getlist("random_options[]", type=str)
+@app.route("/bokehro-check/<int:item_id>")
+def bokehro_check(item_id: int = None):
+    refinings: list[int]      = request.args.getlist("refining", type=int)
+    card_enchants: list[str]  = request.args.getlist("card_enchants", type=str)
+    random_options: list[str] = request.args.getlist("random_options", type=str)
 
     # init
     connection = None
+    df = None
+    item_name: str = ""
 
-    item_id: int = None
-
-    if item_name is not None and item_name != "":
+    if item_id is not None and item_id > 0:
         try:
             connection = pymysql.connect(**args["mysql-ro"])
 
             query_item_trade: str = """
                 SET STATEMENT max_statement_time=10
-                FOR SELECT id
+                FOR SELECT id, item_id
                 FROM item_trade_tbl
-                WHERE item_name = %(item_name)s
             """
+
+            if item_id is not None and item_id > 0:
+                query_item_trade += " WHERE item_id = %(item_id)s"
+            else:
+                query_item_trade += " WHERE item_name = %(item_name)s"
 
             refinings = [value for value in refinings if isinstance(value, int) == True]
             if len(refinings) > 0:
@@ -360,27 +409,25 @@ def bokehro_check():
 
             query_item_trade += " ORDER BY 1 ASC;"
 
-            df = pd.read_sql(sql=query_item_trade, con=connection, params={"item_name":item_name})
+            df = pd.read_sql(sql=query_item_trade, con=connection, params={"item_id": item_id})
 
-            query_item_data: str = """
-                SET STATEMENT max_statement_time=1
-                FOR SELECT item_id, cardillustname
-                FROM item_data_tbl
-                WHERE item_name = %(item_name)s
-                AND slot = %(slot)s;
-            """
-            item_search_name: str = item_name
-            slot: int = 0
-            match = re.match(r"^(.+)\[([0-9])\]$", item_name)
-            if match:
-                item_search_name = match.group(1)
-                slot = int(match.group(2))
+            if item_id is None and len(df) > 0:
+                item_id = df["item_id"][0]
 
-            with connection.cursor() as cursor:
-                cursor.execute(query_item_data, {"item_name":item_search_name, "slot":slot})
-                item_row = cursor.fetchone()
-                if item_row is not None:
-                    item_id = item_row[0]
+            if item_id is not None:
+                query_item_data: str = """
+                    SET STATEMENT max_statement_time=1
+                    FOR SELECT item_id, item_name
+                    FROM item_data_tbl
+                    WHERE item_id = %(item_id)s
+                """
+
+                with connection.cursor() as cursor:
+                    cursor.execute(query_item_data, {"item_id":item_id})
+                    item_row = cursor.fetchone()
+                    if item_row is not None:
+                        item_id = item_row[0]
+                        item_name = item_row[1]
 
         except Exception as ex:
             raise ex
@@ -391,15 +438,15 @@ def bokehro_check():
     response = None
     response_body: dict = {
         "success" : True,
-        "request" : {
+        "data" : {
+            "item_id": item_id,
             "item_name" : item_name,
             "refinings" : refinings
-        },
-        "item_id": item_id
+        }
     }
 
     if df is not None and len(df) > 0:
-        response_body["export_img_url"] = f"https://{request.host}/bokehro-export-img?name=" + quote_plus(item_name)
+        response_body["export_img_url"] = f"https://{request.host}/bokehro-export-img/{item_id:d}"
     else:
         response_body["export_img_url"] = f"https://{request.host}/assets/img/404_notfound.jpg"
 
@@ -423,20 +470,18 @@ def bokehro_resources():
 
     return response
 
-@app.route("/bokehro-export.<string:filetype>", methods=["GET", "POST"])
-def bokehro_export(filetype: str = "json"):
-    item_name: str            = request.args.get("name", default="", type=str)
-    refinings: list[int]      = request.args.getlist("refining[]", type=int)
-
-    card_enchants: list[str]  = request.args.getlist("card_enchant[]", type=str)
-    random_options: list[str] = request.args.getlist("random_option[]", type=str)
+@app.route("/bokehro-export.<string:filetype>/<int:item_id>", methods=["GET", "POST"])
+def bokehro_export(filetype: str = "json", item_id: int = None):
+    refinings: list[int]      = request.args.getlist("refining", type=int)
+    card_enchants: list[str]  = request.args.getlist("card_enchant", type=str)
+    random_options: list[str] = request.args.getlist("random_option", type=str)
 
     # init
     connection = None
 
     df = None
 
-    if item_name is not None and item_name != "":
+    if item_id is not None and item_id > 0:
         try:
             connection = pymysql.connect(**args["mysql-ro"])
 
@@ -444,7 +489,7 @@ def bokehro_export(filetype: str = "json"):
                 SET STATEMENT max_statement_time=10
                 FOR SELECT id, item_name, log_date, unit_price, world, map_name, refining_level, cards, random_options
                 FROM item_trade_tbl
-                WHERE item_name = %(item_name)s
+                WHERE item_id = %(item_id)s
             """
 
             refinings = [value for value in refinings if isinstance(value, int) == True]
@@ -463,7 +508,7 @@ def bokehro_export(filetype: str = "json"):
 
             query_item_trade += " ORDER BY 1 ASC;"
 
-            df = pd.read_sql(query_item_trade, connection, params={"item_name":item_name})
+            df = pd.read_sql(query_item_trade, connection, params={"item_id":item_id})
 
         except Exception as ex:
             raise ex
@@ -496,15 +541,16 @@ def bokehro_items():
 
         query_string = """
             SET STATEMENT max_statement_time=10
-            FOR SELECT item_name
+            FOR SELECT DISTINCT item_id, item_name
             FROM item_suggest_tbl
+            WHERE item_id IS NOT NULL
             ORDER BY 1 ASC
             ;
         """
 
         with connection.cursor() as cursor:
             cursor.execute(query_string)
-            items = [item[0] for item in cursor.fetchall()]
+            items = {item[0] : item[1] for item in cursor.fetchall()}
 
     except Exception as ex:
         raise ex

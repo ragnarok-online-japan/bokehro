@@ -112,8 +112,7 @@
                 <div class="section-title">
                     <h2>Bokeh RO</h2>
                     <p>
-                        <input class="form-control" list="item-list" id="item-select" placeholder="Type to search..."
-                            size="50" />
+                        <input class="form-control" list="item-list" id="item-select" placeholder="Type to search...">
                         <datalist id="item-list"></datalist>
                     </p>
                     <p>
@@ -301,7 +300,7 @@
             var request_params = build_request_params()
 
             if (request_params != "") {
-                location.href = request_params + "#plot"
+                location.href = "/bokehro/" + request_params + "#plot"
             }
         }
 
@@ -309,36 +308,41 @@
             var request_params = build_request_params()
 
             if (request_params != "") {
-                location.href = "/bokehro-export.csv" + request_params
+                location.href = "/bokehro-export.csv/" + request_params
             }
         }
 
         function build_request_params () {
             var request_params = ""
-            var item_name = item_select.value;
-            if (item_name != undefined && item_name != "") {
-                request_params = "?name=" + item_name
+            const item_name = item_select.value
+
+            const selected_item = item_list.querySelector('[value="'+item_name+'"]');
+            const item_id = selected_item.dataset.itemid;
+
+            if (item_id != undefined && item_id > 0) {
+                const url_search_params = new URLSearchParams()
                 if (item_refinings != undefined) {
                     Array.prototype.forEach.call(item_refinings, function (data) {
                         if (data.checked) {
-                            request_params += "&refining[]=" + data.value
+                            url_search_params.append("refining", data.value)
                         }
                     });
                 }
                 if (item_card_enchats != undefined) {
                     Array.prototype.forEach.call(item_card_enchats, function (data) {
                         if (data.checked) {
-                            request_params += "&card_enchants[]=" + encodeURIComponent(data.value)
+                            url_search_params.append("card_enchants", data.value)
                         }
                     });
                 }
                 if (item_random_options != undefined) {
                     Array.prototype.forEach.call(item_random_options, function (data) {
                         if (data.checked) {
-                            request_params += "&random_options[]=" + encodeURIComponent(data.value)
+                            url_search_params.append("random_options", data.value)
                         }
                     });
                 }
+                request_params = item_id + "?" + url_search_params.toString()
             }
             return request_params
         }
@@ -347,18 +351,13 @@
         request.onreadystatechange = function (response) {
             if (request.readyState === 4) {
                 if (request.status === 200) {
-                    // Parse the JSON
-                    var json_options = JSON.parse(request.responseText);
-
-                    // Loop over the JSON array.
-                    json_options.forEach(function (item) {
-                        // Create a new <option> element.
-                        var option = document.createElement('option');
-                        // Set the value using the item in the JSON array.
-                        option.value = item;
-                        // Add the <option> element to the <datalist>.
+                    const items = JSON.parse(request.responseText);
+                    for (const item_id in items) {
+                        let option = document.createElement('option');
+                        option.setAttribute("data-itemid", item_id);
+                        option.setAttribute("value", items[item_id]);
                         item_list.appendChild(option);
-                    });
+                    }
                     item_select.placeholder = "アイテム名を入力してください";
                     item_select.value = "{{item_name}}";
                     item_plot.addEventListener("click", plot_item)
