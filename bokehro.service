@@ -1,11 +1,11 @@
 [Unit]
-Description=bokeh-ro
+Description=bokehro
 After=network.target
 
 [Service]
 Type=simple
 Restart=always
-WorkingDirectory=/opt/bokeh-ro
+WorkingDirectory=/opt/bokehro
 ExecStart=/usr/bin/python3 -u app.py
 StandardOutput=null
 
