@@ -165,7 +165,7 @@ def bokehro(item_id: int = None):
             x_axis_label='日付',
             y_axis_label='価格(Mz)',
             x_axis_type='datetime',
-            tools=['box_zoom','reset','save'],
+            tools=['pan','box_zoom','reset','save'],
             sizing_mode='stretch_width')
 
         # ベースにデータを配置
@@ -379,6 +379,7 @@ def bokehro_check(item_id: int = None):
     connection = None
     df = None
     item_name: str = ""
+    item_highend = None
 
     if item_id is not None and item_id > 0:
         try:
@@ -429,12 +430,25 @@ def bokehro_check(item_id: int = None):
                     item_row = cursor.fetchone()
                     if item_row is not None:
                         item_id = item_row[0]
-                        slot = item_row[2]
+                        item_name = item_row[1]
+                        slot: int = item_row[2]
 
-                        if slot is not None and slot > 0:
-                            item_name = f"{item_row[1]}[{slot}]"
-                        else:
-                            item_name = item_row[1]
+                        #slot上位アイテムがないか確認
+                        if slot is not None:
+                            query_item_data: str = """
+                                SET STATEMENT max_statement_time=1
+                                FOR SELECT item_id, item_name, slot
+                                FROM item_data_tbl
+                                WHERE item_name = %(item_name)s
+                                AND slot = %(slot)s
+                            """
+                            cursor.execute(query_item_data, {"item_name":item_name, "slot": slot+1})
+                            item_row = cursor.fetchone()
+                            if item_row is not None:
+                                item_highend = {
+                                    "item_id": item_row[0],
+                                    "item_name": f"{item_row[1]}[{item_row[2]}]"
+                                }
 
         except Exception as ex:
             raise ex
@@ -447,8 +461,8 @@ def bokehro_check(item_id: int = None):
         "success" : True,
         "data" : {
             "item_id": item_id,
-            "item_name" : item_name,
-            "refinings" : refinings
+            "item_name": item_name,
+            "highend": item_highend
         }
     }
 
@@ -568,4 +582,4 @@ def bokehro_items():
     return jsonify(items)
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=8081, debug=True)
+    app.run(host='127.0.0.1', port=8081, debug=False)

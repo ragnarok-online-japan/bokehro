@@ -16,7 +16,7 @@ FROM item_trade_tbl
 WHERE item_id IS NOT NULL
 ORDER BY 1;
 
-SET SESSION lock_wait_timeout=1;
+SET SESSION lock_wait_timeout=5;
 RENAME TABLE item_suggest_tbl TO item_suggest_tbl_delete, item_suggest_tbl_tmp TO item_suggest_tbl;
 DROP TABLE item_suggest_tbl_delete;
 _EOL_
