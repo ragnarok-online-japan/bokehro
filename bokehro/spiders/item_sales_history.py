@@ -25,13 +25,15 @@ class ItemSalesHistorySpider(CrawlSpider):
 
     item_id: int = None
 
-    def __init__(self, settings, item_id: int = None, *args, **kwargs):
+    def __init__(self, item_id: int = None, *args, **kwargs):
         super(ItemSalesHistorySpider, self).__init__(*args, **kwargs)
         self.item_id = item_id
 
     @classmethod
-    def from_crawler(cls, crawler, item_id: int = None):
-        return cls(settings = crawler.settings, item_id = item_id)
+    def from_crawler(self, crawler, *args, **kwargs):
+        spider = super(ItemSalesHistorySpider, self).from_crawler(crawler, *args, **kwargs)
+        spider._job = kwargs.get('_job')
+        return spider
 
     def start_requests(self):
         if self.item_id is None:
