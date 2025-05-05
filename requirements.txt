@@ -4,5 +4,7 @@ fastapi
 jinja2
 pandas
 scrapy
+scrapyd
+scrapyd-client
 sqlalchemy
 uvicorn
