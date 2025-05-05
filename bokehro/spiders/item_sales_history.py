@@ -5,7 +5,6 @@
 #
 
 from datetime import datetime
-import json
 import re
 import scrapy
 from scrapy.spidermiddlewares.httperror import HttpError
@@ -122,8 +121,8 @@ class ItemSalesHistorySpider(CrawlSpider):
 
             # 403エラーの場合にスリープ
             if response.status == 403:
-                self.logger.warning("403 Forbidden detected. Sleeping for 180 seconds...")
-                time.sleep(180)
+                self.logger.warning("403 Forbidden detected. Sleeping for 60 seconds...")
+                time.sleep(60)
 
         elif failure.check(DNSLookupError):
             # this is the original request
