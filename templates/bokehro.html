@@ -7,13 +7,13 @@
     <meta http-equiv="Cache-Control" content="no-cache">
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     {% if item_name != "" %}
-    <title>RODB - Bokeh RO : {{item_name}} の検索結果</title>
-    <meta property="og:title" content="Bokeh RO : {{item_name}} の検索結果">
+    <title>RODB - BokehRO : {{item_name}} の検索結果</title>
+    <meta property="og:title" content="BokehRO : {{item_name}} の検索結果">
     {% else %}
-    <title>RODB - Bokeh RO</title>
-    <meta property="og:title" content="RODB - Bokeh RO">
+    <title>RODB - BokehRO</title>
+    <meta property="og:title" content="RODB - BokehRO">
     {% endif %}
-    <meta content="Bokeh ROはROのアイテム露店販売履歴をグラフ描画するサービスです" name="description">
+    <meta content="BokehROはROのアイテム露店販売履歴をグラフ描画するサービスです" name="description">
 
     <meta property="og:site_name" content="RODB" />
     <meta property="og:url" content="{{request.url|replace('http://', 'https://')}}">
@@ -175,7 +175,7 @@
                     <div class="col-lg-3 col-md-6 align-items-stretch" data-aos="fade-up" data-aos-delay="100">
                         <div class="member">
                             <div class="member-img">
-                                <img src="https://rotool.gungho.jp/icon/{{item_id}}.png" class="img-fluid" alt="icon">
+                                <img src="https://rodb.aws.0nyx.net/ROOD/items/{{item_id}}.png" class="img-fluid" alt="icon">
                             </div>
                             <div>
                                 <h4>{{item_name}}</h4>
@@ -210,7 +210,7 @@
                             <li><i class="bx bx-chevron-right"></i> <a href="/#services">Services</a></li>
                             <li><i class="bx bx-chevron-right"></i> <a href="/#teams">Teams</a></li>
                             <li><i class="bx bx-chevron-right"></i> <a
-                                    href="https://www.amazon.co.jp/hz/wishlist/ls/2EK058T5A6BN7">Amazon欲しいものリスト</a></li>
+                                    href="https://www.amazon.co.jp/hz/wishlist/ls/2WNM6WNJL0O0W">Amazon欲しいものリスト</a></li>
                         </ul>
                     </div>
 
@@ -326,16 +326,6 @@
         // Set up and make the request.
         request.open('GET', '/bokehro-item-suggest', true);
         request.send();
-    </script>
-
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YCM65EZMQL"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-
-        gtag('config', 'G-YCM65EZMQL');
     </script>
 
 </body>

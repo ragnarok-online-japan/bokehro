@@ -43,7 +43,7 @@ async def bokehro(
     item_name: str = None,
     is_slots: str = None,
     is_random_options: str = None,
-    is_round_cost: str = "G",
+    is_round_price: str = "M",
     refining: list[int] = [],
     db: Session = Depends(get_db_session)):
 
@@ -117,14 +117,29 @@ async def bokehro(
 
         if not df.empty:
             df['color']=[refining_color_map[x] for x in df['refining_level']]
+
+            y_axis_label = "価格(z)"
+            if is_round_price == "K":
+                df['unit_price'] = df['unit_price'].apply(lambda x: round(x / 1000, 0))
+                y_axis_label = "価格(Kz)"
+            elif is_round_price == "M":
+                df['unit_price'] = df['unit_price'].apply(lambda x: round(x / 1000000, 0))
+                y_axis_label = "価格(Mz)"
+            elif is_round_price == "G":
+                df['unit_price'] = df['unit_price'].apply(lambda x: round(x / 1000000000, 0))
+                y_axis_label = "価格(Gz)"
+            elif is_round_price == "T":
+                df['unit_price'] = df['unit_price'].apply(lambda x: round(x / 1000000000000, 0))
+                y_axis_label = "価格(Tz)"
+
             # figure作成
             plot = figure(
-                title=result_data.displayname,
+                title=item_name,
                 x_axis_label='日付',
-                y_axis_label='価格(Mz)',
+                y_axis_label=y_axis_label,
                 x_axis_type='datetime',
                 tools=['box_zoom','reset','save'],
-                sizing_mode='stretch_both')
+                sizing_mode='stretch_width')
 
             # ベースにデータを配置
             plot.scatter(
@@ -166,6 +181,7 @@ async def bokehro(
             "item_count": len(df),
             "item_description": item_description,
             "is_slots": is_slots,
+            "is_random_options": is_random_options,
             "refining_list": refining,
             "plot_script": plot_script,
             "plot_div": plot_div,
