@@ -122,7 +122,7 @@
                     {% for value in range(0, 11) %}
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" id="item-refining-{{value|e}}" name="refining"
-                            value="{{value|e}}" {% if value in refining_list %}checked="checked" {% endif %} />
+                            value="{{value|e}}" {% if refining_levels != None and value in refining_levels %}checked="checked" {% endif %} />
                         <label class="form-check-label" for="item-refining-{{value|e}}">{{value|e}}</label>
                     </div>
                     {% endfor %}
@@ -264,7 +264,7 @@
         var item_list = document.getElementById('item-list');
         var item_is_slots = document.getElementById('item-is-slots');
         var item_is_random_options = document.getElementById('item-is-random-options');
-        var item_refinings = document.getElementsByName('refining');
+        var item_refining_levels = document.getElementsByName('refining');
         var item_plot = document.getElementById('item-plot-button');
 
         function plot_item(event) {
@@ -277,10 +277,10 @@
                 if (item_is_random_options != undefined) {
                     request_params += "&is_random_options=" + item_is_random_options.value
                 }
-                if (item_refinings != undefined) {
-                    Array.prototype.forEach.call(item_refinings, function (refining) {
+                if (item_refining_levels != undefined) {
+                    Array.prototype.forEach.call(item_refining_levels, function (refining) {
                         if (refining.checked) {
-                            request_params += "&refining=" + refining.value
+                            request_params += "&refining_levels=" + refining.value
                         }
                     });
                 }

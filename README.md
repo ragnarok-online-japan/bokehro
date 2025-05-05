@@ -5,6 +5,7 @@ bokehro
 ```bash
 cd /opt/bokehro
 pip3 install -U -r requirements.txt
+
 mkdir -p ~/.config/systemd/user/
 cp -p bokehro-webui.service ~/.config/systemd/user/
 systemctl --user daemon-reload

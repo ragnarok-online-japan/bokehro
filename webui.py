@@ -1,19 +1,19 @@
 #!/usr/bin/env python3.13
 
 import re
+from typing import Union
 
 from bokeh.embed import components
 from bokeh.models import HoverTool
 from bokeh.plotting import figure
 from bokeh.resources import Resources as BokehResources
-
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
-import pandas as pd
 from sqlalchemy.orm import Session
-import uvicorn
 from starlette.middleware.cors import CORSMiddleware
+import pandas as pd
+import uvicorn
 
 from sql_app.models import ItemSalesHistoryTable
 from sql_app import crud, database
@@ -37,6 +37,22 @@ app.add_middleware(
 
 templates = Jinja2Templates(directory="templates")
 
+refining_color_map={
+    0:   "black",
+    1:   "black",
+    2:   "black",
+    3:   "black",
+    4:   "black",
+    5:   "blue",
+    6:   "blue",
+    7:   "green",
+    8:   "green",
+    9:   "orange",
+    10:  "red",
+    None:"gray"
+}
+
+# SQLAlchemyのセッションを取得するための依存関係
 # Dependency
 def get_db_session():
     session = database.SessionLocal()
@@ -49,6 +65,100 @@ def get_db_session():
 def to_dict(obj):
     return {column.name: getattr(obj, column.name) for column in obj.__table__.columns}
 
+# plot_item_sales_history
+def plot_item_sales_history(
+    item_id: int,
+    is_slots: str,
+    is_random_options: str,
+    is_round_price: str,
+    refining_levels: Union[list[int] | None],
+    db: Session
+):
+    item_name: str = None
+    item_description: str = None
+
+    result_sales_history: list[ItemSalesHistoryTable] = crud.get_item_sales_history(
+        db=db,
+        item_id=item_id,
+        is_slots=is_slots,
+        is_random_options=is_random_options,
+        refining_levels=refining_levels
+    )
+
+    result_data = crud.get_item_data_from_id(
+        db=db,
+        id=item_id
+    )
+
+    if result_data is not None:
+        item_name = result_data.displayname
+        item_description = result_data.description
+        if item_description is not None:
+            item_description = item_description.replace("\n", "<br/>\n")
+
+    df = pd.DataFrame()  # 空のDataFrameを作成
+    if len(result_sales_history) > 0:
+        result_sales_history_dicts = [to_dict(row) for row in result_sales_history]
+        del result_sales_history
+        df = pd.DataFrame(result_sales_history_dicts)
+        del result_sales_history_dicts
+
+    y_axis_label = "価格(z)"
+    if is_round_price == "K":
+        y_axis_label = "価格(Kz)"
+    elif is_round_price == "M":
+        y_axis_label = "価格(Mz)"
+    elif is_round_price == "G":
+        y_axis_label = "価格(Gz)"
+    elif is_round_price == "T":
+        y_axis_label = "価格(Tz)"
+
+    # figure作成
+    plot = figure(
+        title=item_name,
+        x_axis_label='日付',
+        y_axis_label=y_axis_label,
+        x_axis_type='datetime',
+        tools=['box_zoom','reset','save'],
+        sizing_mode='stretch_width')
+
+    if not df.empty:
+        df['color']=[refining_color_map[x] for x in df['refining_level']]
+
+        if is_round_price == "K":
+            df['unit_price'] = df['unit_price'].apply(lambda x: round(x / 1000, 0))
+        elif is_round_price == "M":
+            df['unit_price'] = df['unit_price'].apply(lambda x: round(x / 1000000, 0))
+        elif is_round_price == "G":
+            df['unit_price'] = df['unit_price'].apply(lambda x: round(x / 1000000000, 0))
+        elif is_round_price == "T":
+            df['unit_price'] = df['unit_price'].apply(lambda x: round(x / 1000000000000, 0))
+
+        # ベースにデータを配置
+        plot.scatter(
+            source=df,
+            x='log_date',
+            y='unit_price',
+            color='color',
+            size=8,
+            fill_alpha=0.5)
+
+        hover = HoverTool(
+            tooltips=[
+                    ("ID", "@id"),
+                    ("World", "@world"),
+                    ("Map", "@map_name"),
+                    ("日時","@datetime{%F %R}"),
+                    ("価格","@unit_price"),
+                    ("精錬値","@refining"),
+                    ("カード/エンチャント","@slots"),
+                ],
+            formatters={"@log_date":"datetime"}
+        )
+        plot.add_tools(hover)
+
+    return plot, item_name, item_description, len(df)
+
 @app.get('/bokehro', tags=["bokehro"])
 @app.get('/bokehro/{item_id}', tags=["bokehro"])
 async def bokehro(
@@ -58,31 +168,14 @@ async def bokehro(
     is_slots: str = None,
     is_random_options: str = None,
     is_round_price: str = "M",
-    refining: list[int] = [],
+    refining_levels: Union[list[int]] = Query(default=None),
     db: Session = Depends(get_db_session)):
 
     # init
     plot = None
     plot_script: str = ""
     plot_div: str = ""
-
-    refining_color_map={
-        0:   "black",
-        1:   "black",
-        2:   "black",
-        3:   "black",
-        4:   "black",
-        5:   "blue",
-        6:   "blue",
-        7:   "green",
-        8:   "green",
-        9:   "orange",
-        10:  "red",
-        None:"gray"
-    }
-
-    result_data = []
-    df = []
+    item_count: int = 0
     item_description: str = None
 
     if item_id is None and item_name is not None:
@@ -103,82 +196,16 @@ async def bokehro(
             item_id = result_data.id
 
     if item_id is not None:
-        result_sales_history: list[ItemSalesHistoryTable] = crud.get_item_sales_history(
-            db=db,
+        plot, item_name, item_description, item_count = plot_item_sales_history(
             item_id=item_id,
             is_slots=is_slots,
             is_random_options=is_random_options,
-            refining_levels=refining
+            is_round_price=is_round_price,
+            refining_levels=refining_levels,
+            db=db
         )
 
-        result_data = crud.get_item_data_from_id(
-            db=db,
-            id=item_id
-        )
-
-        if result_data is not None:
-            item_name = result_data.displayname
-            item_description = result_data.description
-            if item_description is not None:
-                item_description = item_description.replace("\n", "<br/>\n")
-
-        df = pd.DataFrame()  # 空のDataFrameを作成
-        if len(result_sales_history) > 0:
-            result_sales_history_dicts = [to_dict(row) for row in result_sales_history]
-            del result_sales_history
-            df = pd.DataFrame(result_sales_history_dicts)
-            del result_sales_history_dicts
-
-        if not df.empty:
-            df['color']=[refining_color_map[x] for x in df['refining_level']]
-
-            y_axis_label = "価格(z)"
-            if is_round_price == "K":
-                df['unit_price'] = df['unit_price'].apply(lambda x: round(x / 1000, 0))
-                y_axis_label = "価格(Kz)"
-            elif is_round_price == "M":
-                df['unit_price'] = df['unit_price'].apply(lambda x: round(x / 1000000, 0))
-                y_axis_label = "価格(Mz)"
-            elif is_round_price == "G":
-                df['unit_price'] = df['unit_price'].apply(lambda x: round(x / 1000000000, 0))
-                y_axis_label = "価格(Gz)"
-            elif is_round_price == "T":
-                df['unit_price'] = df['unit_price'].apply(lambda x: round(x / 1000000000000, 0))
-                y_axis_label = "価格(Tz)"
-
-            # figure作成
-            plot = figure(
-                title=item_name,
-                x_axis_label='日付',
-                y_axis_label=y_axis_label,
-                x_axis_type='datetime',
-                tools=['box_zoom','reset','save'],
-                sizing_mode='stretch_width')
-
-            # ベースにデータを配置
-            plot.scatter(
-                source=df,
-                x='log_date',
-                y='unit_price',
-                color='color',
-                size=8,
-                fill_alpha=0.5)
-
-            hover = HoverTool(
-                tooltips=[
-                        ("ID", "@id"),
-                        ("World", "@world"),
-                        ("Map", "@map_name"),
-                        ("日時","@datetime{%F %R}"),
-                        ("価格","@unit_price"),
-                        ("精錬値","@refining"),
-                        ("カード/エンチャント","@slots"),
-                    ],
-                formatters={"@log_date":"datetime"}
-            )
-            plot.add_tools(hover)
-
-            plot_script, plot_div = components(plot)
+        plot_script, plot_div = components(plot)
 
     # grab the static resources
     resources = BokehResources(mode="cdn")
@@ -192,11 +219,11 @@ async def bokehro(
             "request": request,
             "item_id": item_id,
             "item_name": item_name,
-            "item_count": len(df),
+            "item_count": item_count,
             "item_description": item_description,
             "is_slots": is_slots,
             "is_random_options": is_random_options,
-            "refining_list": refining,
+            "refining_levels": refining_levels,
             "plot_script": plot_script,
             "plot_div": plot_div,
             "resource_js": resource_js,
@@ -204,6 +231,20 @@ async def bokehro(
         },
     )
     return html
+
+@app.get("/bokehro-export-img/<item_id>")
+async def bokehro_export_img(
+    request: Request,
+    item_id: int = None,
+    db: Session = Depends(get_db_session)):
+
+    #if item_id is not None and item_id > 0:
+    #    plot, _, _, _ = plot_item_sales_history(
+    #        item_id=item_id,
+    #        db=db
+    #    )
+
+    raise HTTPException(status_code=404, detail="sorry, not implemented yet")
 
 @app.get('/bokehro-item-suggest', tags=["bokehro"])
 async def bokehro_item_suggest(

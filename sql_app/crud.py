@@ -15,26 +15,24 @@ def get_item_sales_history(db: Session,
     # filter by slots
     if is_slots is not None and is_slots != "":
         if is_slots == "_notempty_":
-            query = query.filter(ItemSalesHistoryTable.slots != "[]")
+            query = query.filter(ItemSalesHistoryTable.slots != '"[null, null, null, null]"')
         elif is_slots == "_empty_":
-            query = query.filter(ItemSalesHistoryTable.slots == "[]")
+            query = query.filter(ItemSalesHistoryTable.slots == '"[null, null, null, null]"')
 
     # filter by random options
     if is_random_options is not None and is_random_options != "":
         if is_random_options == "_notempty_":
-            query = query.filter(ItemSalesHistoryTable.random_options != "[]")
+            query = query.filter(ItemSalesHistoryTable.random_options != '"[null, null, null, null, null]"')
         elif is_random_options == "_empty_":
-            query = query.filter(ItemSalesHistoryTable.random_options == "[]")
+            query = query.filter(ItemSalesHistoryTable.random_options == '"[null, null, null, null, null]"')
 
     # filter by refining levels
-    refining_level_list = [value for value in refining_levels if isinstance(value, int) == True]
-    if len(refining_level_list) > 0:
-        query = query.filter(ItemSalesHistoryTable.refining_level.in_(refining_level_list))
+    if refining_levels is not None and len(refining_levels) > 0:
+        query = query.filter(ItemSalesHistoryTable.refining_level.in_(refining_levels))
 
     # filter by grade levels
-    grade_level_list = [value for value in grade_levels if isinstance(value, int) == True]
-    if len(grade_level_list) > 0:
-        query = query.filter(ItemSalesHistoryTable.grade_level.in_(grade_level_list))
+    if grade_levels is not None and len(grade_levels) > 0:
+        query = query.filter(ItemSalesHistoryTable.grade_level.in_(grade_levels))
 
     # order by log_date ascending
     query = query.order_by(ItemSalesHistoryTable.log_date.asc())
