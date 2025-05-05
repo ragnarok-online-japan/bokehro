@@ -6,7 +6,7 @@ After=network.target mariadb.service
 Type=simple
 Restart=always
 WorkingDirectory=/opt/bokehro
-ExecStart=/home/ec2-user/.local/bin/uvicorn webui:app --reload --port 8083
+ExecStart=/home/ec2-user/.local/bin/uvicorn webui:app --reload --port 8081
 StandardOutput=null
 
 [Install]
