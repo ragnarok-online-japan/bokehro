@@ -159,8 +159,8 @@ def plot_item_sales_history(
 
     return plot, item_name, item_description, len(df)
 
-@app.get('/bokehro', tags=["bokehro"])
-@app.get('/bokehro/{item_id}', tags=["bokehro"])
+@app.get('/bokehro', tags=["webui"])
+@app.get('/bokehro/{item_id}', tags=["webui"])
 async def bokehro(
     request: Request,
     item_id: int = None,
@@ -232,7 +232,42 @@ async def bokehro(
     )
     return html
 
-@app.get("/bokehro-export-img/<item_id>")
+@app.get("/bokehro-check/{item_id}", tags=["api"])
+async def bokehro_check(
+    request: Request,
+    item_id: int = None,
+    db: Session = Depends(get_db_session)):
+
+    item_name: str = ""
+    item_highend = None
+
+    result_data = crud.get_item_data_from_id(
+        db=db,
+        id=item_id
+    )
+
+    if result_data is None:
+        response_body: dict = {
+            "success" : False,
+            "data" : {
+                "item_id": item_id
+            }
+        }
+        return JSONResponse(content=response_body, media_type="application/json", status_code=404)
+
+    item_name = result_data.displayname
+    response_body: dict = {
+        "success" : True,
+        "data" : {
+            "item_id": item_id,
+            "item_name": item_name,
+            "highend": item_highend
+        }
+    }
+
+    return JSONResponse(content=response_body, media_type="application/json")
+
+@app.get("/bokehro-export-img/{item_id}", tags=["api"])
 async def bokehro_export_img(
     request: Request,
     item_id: int = None,
