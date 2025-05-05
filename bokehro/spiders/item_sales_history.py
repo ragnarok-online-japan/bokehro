@@ -110,10 +110,9 @@ class ItemSalesHistorySpider(CrawlSpider):
 
             yield item_sales_history
 
-    def errback_httpjson(self, failure, item_id):
+    def errback_httpjson(self, failure):
         # log all failures
         self.logger.error(repr(failure))
-        self.request_loop = False
 
         if failure.check(HttpError):
             # you can get the response

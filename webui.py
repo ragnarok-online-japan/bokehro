@@ -14,6 +14,7 @@ import pandas as pd
 from sqlalchemy.orm import Session
 import uvicorn
 
+from sql_app.models import ItemSalesHistoryTable
 from sql_app import crud
 from sql_app.database import SessionLocal
 
@@ -31,6 +32,10 @@ def get_db_session():
         yield session
     finally:
         session.close()
+
+# SQLAlchemyオブジェクトを辞書形式に変換する関数
+def to_dict(obj):
+    return {column.name: getattr(obj, column.name) for column in obj.__table__.columns}
 
 @app.get('/bokehro', tags=["bokehro"])
 async def bokehro(
@@ -67,7 +72,7 @@ async def bokehro(
     item_description: str = None
 
     if item_id is not None:
-        result_sales_history = crud.get_item_sales_history(
+        result_sales_history: list[ItemSalesHistoryTable] = crud.get_item_sales_history(
             db=db,
             item_id=item_id,
             is_slots=is_slots,
@@ -85,7 +90,10 @@ async def bokehro(
             if item_description is not None:
                 item_description = item_description.replace("\n", "<br/>\n")
 
-        df = pd.DataFrame(result_sales_history)
+        df = pd.DataFrame()  # 空のDataFrameを作成
+        if result_sales_history:
+            result_sales_history_dicts = [to_dict(row) for row in result_sales_history]
+            df = pd.DataFrame(result_sales_history_dicts)
 
         if not df.empty:
             df['color']=[refining_color_map[x] for x in df['refining_level']]
@@ -100,24 +108,25 @@ async def bokehro(
                 sizing_mode='stretch_both')
 
             # ベースにデータを配置
-            plot.circle(
+            plot.scatter(
                 source=df,
-                x='datetime',
-                y='unit_cost',
+                x='log_date',
+                y='unit_price',
                 color='color',
                 size=8,
                 fill_alpha=0.5)
 
             hover = HoverTool(
                 tooltips=[
-                    ("ID", "@id"),
-                    ("World", "@world"),
-                    ("日時","@datetime{%F %R}"),
-                    ("価格","@unit_cost"),
-                    ("精錬値","@refining"),
-                    ("カード/エンチャント","@slots"),
+                        ("ID", "@id"),
+                        ("World", "@world"),
+                        ("Map", "@map_name"),
+                        ("日時","@datetime{%F %R}"),
+                        ("価格","@unit_price"),
+                        ("精錬値","@refining"),
+                        ("カード/エンチャント","@slots"),
                     ],
-                formatters={"@datetime":"datetime"}
+                formatters={"@log_date":"datetime"}
             )
             plot.add_tools(hover)
 

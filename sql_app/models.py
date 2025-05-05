@@ -26,7 +26,7 @@ class ItemSalesHistoryTable(Base):
     __table_args__=(
         Index("idx_item_name", "item_name"),
         Index("idx_log_date", "log_date"),
-        UniqueConstraint("world", "map_name", "item_id", "unit_price", "count", "slots", "random_options", "refining_level", "grade_level", name="uq_itemsaleshistory"),
+        UniqueConstraint("world", "map_name", "log_date", "item_id", "unit_price", "count", "slots", "random_options", "refining_level", "grade_level", name="uq_itemsaleshistory"),
         {"mysql_engine": "InnoDB", "mysql_charset": "utf8mb4", "mysql_row_format": "DYNAMIC"}
     )
 

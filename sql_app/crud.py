@@ -4,13 +4,13 @@ from sqlalchemy.orm import Session
 from sql_app.models import ItemSalesHistoryTable, ItemDataTable, ItemSuggestTable
 
 def get_item_sales_history(db: Session,
-                           item_name: str,
+                           item_id: int,
                            is_slots: str|None = None,
                            is_random_options: str|None = None,
                            refining_levels: list[int] = [],
                            grade_levels: list[int] = []):
     query = db.query(ItemSalesHistoryTable)\
-        .filter(ItemSalesHistoryTable.item_name == item_name)
+        .filter(ItemSalesHistoryTable.item_id == item_id)
 
     # filter by slots
     if is_slots is not None and is_slots != "":
