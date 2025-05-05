@@ -11,6 +11,7 @@ import scrapy
 from scrapy.spidermiddlewares.httperror import HttpError
 from scrapy.spiders import CrawlSpider
 from twisted.internet.error import DNSLookupError, TimeoutError
+import time
 
 from bokehro.items import ItemSalesHistory
 from sql_app import crud
@@ -119,13 +120,16 @@ class ItemSalesHistorySpider(CrawlSpider):
             response = failure.value.response
             self.logger.warning('HttpError on {} (status:{})'.format(response.url, response.status))
 
-        #elif isinstance(failure.value, DNSLookupError):
+            # 403エラーの場合にスリープ
+            if response.status == 403:
+                self.logger.warning("403 Forbidden detected. Sleeping for 180 seconds...")
+                time.sleep(180)
+
         elif failure.check(DNSLookupError):
             # this is the original request
             request = failure.request
             self.logger.warning('DNSLookupError on {}'.format(request.url))
 
-        #elif isinstance(failure.value, TimeoutError):
         elif failure.check(TimeoutError):
             request = failure.request
             self.logger.warning('TimeoutError on {}'.format(request.url))
