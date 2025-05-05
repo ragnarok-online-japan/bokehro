@@ -6,7 +6,7 @@ After=network.target mariadb.service
 Type=simple
 Restart=always
 WorkingDirectory=/opt/bokehro
-ExecStart=/usr/bin/python3 -u webui.py
+ExecStart=/home/ec2-user/.local/bin/uvicorn webui:app --reload --port 8083
 StandardOutput=null
 
 [Install]

@@ -5,9 +5,8 @@ import re
 
 import pandas as pd
 
-from sql_app import models, crud
-from sql_app.database import Engine, SessionLocal
-models.Base.metadata.create_all(bind=Engine)
+from bokehro.sql_app import models, crud, database
+models.Base.metadata.create_all(bind=database.Engine)
 
 parser = argparse.ArgumentParser(description='')
 
@@ -29,7 +28,7 @@ def main(args):
 
     pattern = re.compile(r".*\[([0-9]+)\]$")
 
-    with SessionLocal() as session:
+    with database.SessionLocal() as session:
         for row in df.iterrows():
             slot: int|None = None
             matches = pattern.match(row[1]['displayname'])

@@ -13,8 +13,8 @@ from twisted.internet.error import DNSLookupError, TimeoutError
 import time
 
 from bokehro.items import ItemSalesHistory
-from sql_app import crud
-from sql_app.database import SessionLocal
+from bokehro.sql_app import crud
+from bokehro.sql_app.database import SessionLocal
 
 
 class ItemSalesHistorySpider(CrawlSpider):

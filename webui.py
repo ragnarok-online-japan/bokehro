@@ -14,9 +14,8 @@ import pandas as pd
 from sqlalchemy.orm import Session
 import uvicorn
 
-from sql_app.models import ItemSalesHistoryTable
-from sql_app import crud
-from sql_app.database import SessionLocal
+from bokehro.sql_app.models import ItemSalesHistoryTable
+from bokehro.sql_app import crud, database
 
 app = FastAPI(
     title="bokehro",
@@ -27,7 +26,7 @@ templates = Jinja2Templates(directory="templates")
 
 # Dependency
 def get_db_session():
-    session = SessionLocal()
+    session = database.SessionLocal()
     try:
         yield session
     finally:

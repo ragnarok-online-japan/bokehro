@@ -7,8 +7,8 @@
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
 import json
-from sql_app import models
-from sql_app.database import Engine, SessionLocal
+from bokehro.sql_app import models
+from bokehro.sql_app.database import Engine, SessionLocal
 from sqlalchemy.dialects.mysql import insert
 
 class MariaDbPipeline:

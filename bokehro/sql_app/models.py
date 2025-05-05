@@ -6,7 +6,7 @@ from sqlalchemy.dialects.mysql import TIMESTAMP as Timestamp
 from sqlalchemy.schema import Index, UniqueConstraint
 from sqlalchemy.sql.expression import text
 
-from sql_app.database import Base
+from bokehro.sql_app.database import Base
 
 
 class ItemDataTable(Base):
