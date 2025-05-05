@@ -13,6 +13,7 @@ from fastapi.templating import Jinja2Templates
 import pandas as pd
 from sqlalchemy.orm import Session
 import uvicorn
+from starlette.middleware.cors import CORSMiddleware
 
 from sql_app.models import ItemSalesHistoryTable
 from sql_app import crud, database
@@ -21,6 +22,18 @@ app = FastAPI(
     title="bokehro",
     description="BokehRO - Bokeh for Ragnarok Online item sales history.",
     version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost",
+        "https://rodb.aws.0nyx.net",
+        "https://rotool.gungho.jp"
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"]
+)
 
 templates = Jinja2Templates(directory="templates")
 
