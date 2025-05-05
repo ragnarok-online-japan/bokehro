@@ -1,5 +1,8 @@
-mysqlclient
-pandas
+PyMySQL
 bokeh
-flask
-jsonc-parser
+fastapi
+jinja2
+pandas
+scrapy
+sqlalchemy
+uvicorn

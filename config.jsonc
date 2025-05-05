@@ -1,9 +1,0 @@
-{
-    "mysql" : {
-        "host"       : "localhost",
-        "user"       : "pigeon",
-        "passwd"     : "sNOTbideZcFlXPAn",
-        "db"         : "pigeon",
-        "charset"    : "utf8mb4"
-    }
-}

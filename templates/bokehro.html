@@ -44,7 +44,7 @@
 
     <link href="/assets/css/rodb.css" rel="stylesheet">
 
-    {{ css_resources|safe }}
+    {{ resource_css|safe }}
 
     <!-- =======================================================
   * Template Name: OnePage - v4.7.0
@@ -121,7 +121,7 @@
                     </div>
                     {% for value in range(0, 11) %}
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" id="item-refining-{{value|e}}" name="refining[]"
+                        <input class="form-check-input" type="checkbox" id="item-refining-{{value|e}}" name="refining"
                             value="{{value|e}}" {% if value in refining_list %}checked="checked" {% endif %} />
                         <label class="form-check-label" for="item-refining-{{value|e}}">{{value|e}}</label>
                     </div>
@@ -129,20 +129,19 @@
                     </p>
                     <p>
                     <div class="form-check form-check-inline">
-                        カード:
-                        <select class="form-select" id="item-is-card">
-                            <option value="_all_" {% if is_card=="_all_" %}selected{% endif%}>絞らない(全て)</option>
-                            <option value="_none_" {% if is_card=="_none_" %}selected{% endif%}>カード無し</option>
-                            <option value="_required_" {% if is_card=="_required_" %}selected{% endif%}>カード有り</option>
+                        カード/エンチャント:
+                        <select class="form-select" id="item-is-slots">
+                            <option value="" {% if is_slots=="" %}selected{% endif%}>絞らない(全て)</option>
+                            <option value="_empty_" {% if is_slots=="_empty_" %}selected{% endif%}>無し</option>
+                            <option value="_notempty_" {% if is_slots=="_notempty_" %}selected{% endif%}>有り</option>
                         </select>
                     </div>
                     <div class="form-check form-check-inline">
-                        エンチャント:
-                        <select class="form-select" id="item-is-enchant">
-                            <option value="_all_" {% if is_enchant=="_all_" %}selected{% endif%}>絞らない(全て)</option>
-                            <option value="_none_" {% if is_enchant=="_none_" %}selected{% endif%}>エンチャント無し</option>
-                            <option value="_required_" {% if is_enchant=="_required_" %}selected{% endif%}>エンチャント有り
-                            </option>
+                        ランダムオプション:
+                        <select class="form-select" id="item-is-random-options">
+                            <option value="" {% if is_random_options=="" %}selected{% endif%}>絞らない(全て)</option>
+                            <option value="_empty_" {% if is_random_options=="_empty_" %}selected{% endif%}>無し</option>
+                            <option value="_notempty_" {% if is_random_options=="_notempty_" %}selected{% endif%}>有り</option>
                         </select>
                     </div>
                     </p>
@@ -243,8 +242,9 @@
     </footer><!-- End Footer -->
 
     <div id="preloader"></div>
-    <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i
-            class="bi bi-arrow-up-short"></i></a>
+    <a href="#" class="back-to-top d-flex align-items-center justify-content-center">
+        <i class="bi bi-arrow-up-short"></i>
+    </a>
 
     <!-- Vendor JS Files -->
     <script src="/assets/vendor/purecounter/purecounter.js"></script>
@@ -257,30 +257,30 @@
 
     <!-- Template Main JS File -->
     <script src="/assets/js/main.js"></script>
-    {{ js_resources|safe }}
-    {{ plot_script|safe }}
+{{ resource_js|safe }}
+{{ plot_script|safe }}
     <script type="text/javascript">
         var item_select = document.getElementById('item-select');
         var item_list = document.getElementById('item-list');
-        var item_is_card = document.getElementById('item-is-card');
-        var item_is_enchant = document.getElementById('item-is-enchant');
-        var item_refinings = document.getElementsByName('refining[]');
+        var item_is_slots = document.getElementById('item-is-slots');
+        var item_is_random_options = document.getElementById('item-is-random-options');
+        var item_refinings = document.getElementsByName('refining');
         var item_plot = document.getElementById('item-plot-button');
 
         function plot_item(event) {
             var item_name = item_select.value;
             if (item_name != undefined && item_name != "") {
-                var request_params = "?name=" + item_name
-                if (item_is_card != undefined) {
-                    request_params += "&is_card=" + item_is_card.value
+                var request_params = "?item_name=" + item_name
+                if (item_is_slots != undefined) {
+                    request_params += "&is_slots=" + item_is_slots.value
                 }
-                if (item_is_enchant != undefined) {
-                    request_params += "&is_enchant=" + item_is_enchant.value
+                if (item_is_random_options != undefined) {
+                    request_params += "&is_random_options=" + item_is_random_options.value
                 }
                 if (item_refinings != undefined) {
                     Array.prototype.forEach.call(item_refinings, function (refining) {
                         if (refining.checked) {
-                            request_params += "&refining[]=" + refining.value
+                            request_params += "&refining=" + refining.value
                         }
                     });
                 }
@@ -324,7 +324,7 @@
         item_select.placeholder = "Loading items...";
 
         // Set up and make the request.
-        request.open('GET', '/bokehro-items', true);
+        request.open('GET', '/bokehro-item-suggest', true);
         request.send();
     </script>
 

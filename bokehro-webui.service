@@ -1,0 +1,13 @@
+[Unit]
+Description=bokehro-webui
+After=network.target mariadb.service
+
+[Service]
+Type=simple
+Restart=always
+WorkingDirectory=/opt/bokehro
+ExecStart=/usr/bin/python3 -u webui.py
+StandardOutput=null
+
+[Install]
+WantedBy=default.target

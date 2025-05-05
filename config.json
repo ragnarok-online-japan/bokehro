@@ -1,0 +1,10 @@
+{
+    "sqlalchemy": {
+        "protocol": "mysql+pymysql",
+        "username": "ro-items",
+        "password": "DUMMY_PASSWORD",
+        "hostname": "localhost",
+        "dbname": "ro-items",
+        "charset": "utf8mb4"
+    }
+}
