@@ -151,16 +151,16 @@
                     </div>
                 </div>
                 <div class="row">
-                    {% if item_name != "" and item_count == 0 %}
-                    <h3 class="text-center">該当アイテムの露店販売履歴は有りません</h3>
-                    {% else %}
-                    {{ plot_div|safe }}
-                    {% endif %}
+{% if item_id != None and item_count == 0 %}
+<h3 class="text-center">該当アイテムの露店販売履歴は有りません</h3>
+{% else %}
+{{ plot_div|safe }}
+{% endif %}
                 </div>
             </div>
         </section><!-- End Sevices Section -->
 
-        {% if item_id != None %}
+{% if item_id != None %}
         <!-- ======= Item Section ======= -->
         <section id="item" class="inner-page">
             <div class="container" data-aos="fade-up">
@@ -187,7 +187,7 @@
 
             </div>
         </section><!-- End Item Section -->
-        {% endif %}
+{% endif %}
     </main><!-- End #main -->
 
     <!-- ======= Footer ======= -->

@@ -37,6 +37,7 @@ def to_dict(obj):
     return {column.name: getattr(obj, column.name) for column in obj.__table__.columns}
 
 @app.get('/bokehro', tags=["bokehro"])
+@app.get('/bokehro/{item_id}', tags=["bokehro"])
 async def bokehro(
     request: Request,
     item_id: int = None,
