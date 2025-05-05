@@ -17,8 +17,8 @@ eggs_dir  = /home/ec2-user/scrapyd/eggs
 logs_dir  = /home/ec2-user/scrapyd/logs
 dbs_dir   = /home/ec2-user/scrapyd/dbs
 items_dir = /home/ec2-user/scrapyd/items
-jobs_to_keep = 2
-max_proc = 2
+jobs_to_keep = 1
+max_proc = 1
 max_proc_per_cpu = 1
 finished_to_keep = 100
 poll_interval = 10.0
@@ -50,9 +50,9 @@ python3.13 scrapyd_setup.py sdist
 scrapyd-deploy
 
 # local execute
-scrapy crawl ItemSalesHistorySpider --loglevel WARNING
+scrapy crawl ItemSalesHistorySpider
 
-# execute
+# schedule execute
 curl http://localhost:6800/schedule.json -d project=bokehro -d spider=ItemSalesHistorySpider
 ```
 
