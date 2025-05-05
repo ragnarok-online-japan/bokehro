@@ -265,7 +265,7 @@ async def bokehro_check(
         }
     }
 
-    response_body["export_img_url"] = f"https://rodb.aws.0nyx.net/assets/sorry_now_printing.jpg"
+    response_body["export_img_url"] = f"https://rodb.aws.0nyx.net/assets/img/sorry_now_printing.jpg"
 
     return JSONResponse(content=response_body, media_type="application/json")
 
