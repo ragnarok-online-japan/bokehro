@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, String, Text
+from sqlalchemy import CheckConstraint, Column, DateTime, String, Text
 from sqlalchemy.dialects.mysql import BIGINT as BigInteger
 from sqlalchemy.dialects.mysql import INTEGER as Integer
 from sqlalchemy.dialects.mysql import TIMESTAMP as Timestamp
@@ -27,6 +27,8 @@ class ItemSalesHistoryTable(Base):
         Index("idx_item_name", "item_name"),
         Index("idx_log_date", "log_date"),
         UniqueConstraint("world", "map_name", "log_date", "item_id", "unit_price", "count", "slots", "random_options", "refining_level", "grade_level", name="uq_itemsaleshistory"),
+        CheckConstraint("JSON_VALID(slots)", name="ck_slots"),
+        CheckConstraint("JSON_VALID(random_options)", name="ck_random_options"),
         {"mysql_engine": "InnoDB", "mysql_charset": "utf8mb4", "mysql_row_format": "DYNAMIC"}
     )
 
