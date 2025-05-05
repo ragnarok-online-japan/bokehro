@@ -34,10 +34,10 @@ def get_item_sales_history(db: Session,
     # filter by grade levels
     grade_level_list = [value for value in grade_levels if isinstance(value, int) == True]
     if len(grade_level_list) > 0:
-        query = query.filter(ItemSalesHistoryTable.grade_lebel.in_(grade_level_list))
+        query = query.filter(ItemSalesHistoryTable.grade_level.in_(grade_level_list))
 
-    # order by datetime ascending
-    query = query.order_by(asc(ItemSalesHistoryTable.log_date), asc(ItemSalesHistoryTable.id))
+    # order by log_date ascending
+    query = query.order_by(ItemSalesHistoryTable.log_date.asc())
 
     return query.all()
 

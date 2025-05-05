@@ -24,7 +24,7 @@ class ItemDataTable(Base):
 class ItemSalesHistoryTable(Base):
     __tablename__ = "item_sales_history_tbl"
     __table_args__=(
-        Index("idx_item_id", "item_id"),
+        Index("idx_item_id", "item_id", "log_date"),
         Index("idx_item_name", "item_name"),
         Index("idx_log_date", "log_date"),
         UniqueConstraint("world", "map_name", "log_date", "item_id", "unit_price", "count", "slots", "random_options", "refining_level", "grade_level", name="uq_item_sales_history"),

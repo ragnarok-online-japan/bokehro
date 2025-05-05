@@ -40,6 +40,7 @@ def to_dict(obj):
 async def bokehro(
     request: Request,
     item_id: int = None,
+    item_name: str = None,
     is_slots: str = None,
     is_random_options: str = None,
     is_round_cost: str = "G",
@@ -66,9 +67,26 @@ async def bokehro(
         None:"gray"
     }
 
+    result_data = []
     df = []
-    item_name: str = ""
     item_description: str = None
+
+    if item_id is None and item_name is not None:
+        pattern = re.compile(r"^(.+)\[([0-9]+)\]$")
+        match = pattern.match(item_name)
+        slot = None
+        if match is not None:
+            item_name = match.group(1)
+            slot = match.group(2)
+
+        result_data = crud.get_item_data_from_displayname(
+            db=db,
+            displayname=item_name,
+            slot=slot
+        )
+
+        if result_data is not None:
+            item_id = result_data.id
 
     if item_id is not None:
         result_sales_history: list[ItemSalesHistoryTable] = crud.get_item_sales_history(
@@ -85,18 +103,20 @@ async def bokehro(
         )
 
         if result_data is not None:
+            item_name = result_data.displayname
             item_description = result_data.description
             if item_description is not None:
                 item_description = item_description.replace("\n", "<br/>\n")
 
         df = pd.DataFrame()  # 空のDataFrameを作成
-        if result_sales_history:
+        if len(result_sales_history) > 0:
             result_sales_history_dicts = [to_dict(row) for row in result_sales_history]
+            del result_sales_history
             df = pd.DataFrame(result_sales_history_dicts)
+            del result_sales_history_dicts
 
         if not df.empty:
             df['color']=[refining_color_map[x] for x in df['refining_level']]
-
             # figure作成
             plot = figure(
                 title=result_data.displayname,
