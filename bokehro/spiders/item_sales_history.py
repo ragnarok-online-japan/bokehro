@@ -13,8 +13,7 @@ from twisted.internet.error import DNSLookupError, TimeoutError
 import time
 
 from bokehro.items import ItemSalesHistory
-from bokehro.sql_app import crud
-from bokehro.sql_app.database import SessionLocal
+from sql_app import crud, database
 
 
 class ItemSalesHistorySpider(CrawlSpider):
@@ -37,7 +36,7 @@ class ItemSalesHistorySpider(CrawlSpider):
     def start_requests(self):
         if self.item_id is None:
             item_list = []
-            with SessionLocal() as session:
+            with database.SessionLocal() as session:
                 item_list = crud.get_item_data_list(
                     db=session,
                     sort_by="id",
@@ -114,21 +113,48 @@ class ItemSalesHistorySpider(CrawlSpider):
         # log all failures
         self.logger.error(repr(failure))
 
+        error_info = {
+            "error_type": None,
+            "url": None,
+            "status": None,
+            "message": repr(failure)
+        }
+
         if failure.check(HttpError):
             # you can get the response
             response = failure.value.response
             self.logger.warning('HttpError on {} (status:{})'.format(response.url, response.status))
 
-            # 403エラーの場合にスリープ
+            error_info["error_type"] = "HttpError"
+            error_info["url"] = response.url
+            error_info["status"] = response.status
+
+            # 403エラーの場合にスリープしてリトライ
             if response.status == 403:
-                self.logger.warning("403 Forbidden detected. Sleeping for 60 seconds...")
+                self.logger.warning(f"403 Forbidden detected. {response.url}, Sleeping for 60 seconds and retrying...")
                 time.sleep(60)
+                yield scrapy.Request(
+                    url=response.url,
+                    meta=response.meta,
+                    errback=self.errback_httpjson,
+                    callback=self.parse_httpjson,
+                    cb_kwargs=response.cb_kwargs
+                )
 
         elif failure.check(DNSLookupError):
             # this is the original request
             request = failure.request
             self.logger.warning('DNSLookupError on {}'.format(request.url))
 
+            error_info["error_type"] = "DNSLookupError"
+            error_info["url"] = request.url
+
         elif failure.check(TimeoutError):
             request = failure.request
             self.logger.warning('TimeoutError on {}'.format(request.url))
+
+            error_info["error_type"] = "TimeoutError"
+            error_info["url"] = request.url
+
+        # エラー情報をジェネレーターとして返す
+        yield error_info

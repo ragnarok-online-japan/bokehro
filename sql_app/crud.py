@@ -1,7 +1,7 @@
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
 
-from bokehro.sql_app.models import ItemSalesHistoryTable, ItemDataTable, ItemSuggestTable
+from sql_app.models import ItemSalesHistoryTable, ItemDataTable, ItemSuggestTable
 
 def get_item_sales_history(db: Session,
                            item_id: int,

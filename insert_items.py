@@ -5,7 +5,7 @@ import re
 
 import pandas as pd
 
-from bokehro.sql_app import models, crud, database
+from sql_app import models, crud, database
 models.Base.metadata.create_all(bind=database.Engine)
 
 parser = argparse.ArgumentParser(description='')

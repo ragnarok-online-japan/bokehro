@@ -1,1 +1,2 @@
 recursive-include bokehro *
+recursive-include sql_app *

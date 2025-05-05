@@ -7,13 +7,12 @@
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
 import json
-from bokehro.sql_app import models
-from bokehro.sql_app.database import Engine, SessionLocal
+from sql_app import models, database
 from sqlalchemy.dialects.mysql import insert
 
 class MariaDbPipeline:
     def __init__(self, settings, *args, **kwargs):
-        models.Base.metadata.create_all(bind=Engine)
+        models.Base.metadata.create_all(bind=database.Engine)
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -22,7 +21,7 @@ class MariaDbPipeline:
         )
 
     def open_spider(self, spider):
-        self.session = SessionLocal()
+        self.session = database.SessionLocal()
 
     def close_spider(self, spider):
         if self.session:
