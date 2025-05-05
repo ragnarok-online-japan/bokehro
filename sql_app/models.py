@@ -1,8 +1,8 @@
-from enum import unique
-from sqlalchemy import JSON, Column, DateTime, String, Text
+from sqlalchemy import Column, DateTime, String, Text
 from sqlalchemy.dialects.mysql import BIGINT as BigInteger
 from sqlalchemy.dialects.mysql import INTEGER as Integer
 from sqlalchemy.dialects.mysql import TIMESTAMP as Timestamp
+from sqlalchemy.dialects.mysql import JSON
 from sqlalchemy.schema import Index, UniqueConstraint
 from sqlalchemy.sql.expression import text
 
