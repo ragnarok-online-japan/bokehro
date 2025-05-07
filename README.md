@@ -45,7 +45,7 @@ _EOL_
 
 echo "export PYTHONPATH=/opt/bokehro:\$PYTHONPATH" >> ~/.bash_profile
 source ~/.bash_profile
-mkdir -p ~/scrapyd/{eggs,logs,dbs,items}
+mkdir -p ~/scrapyd/{eggs,logs,dbs}
 systemctl --user enable --now scrapyd.service
 
 # deploy
