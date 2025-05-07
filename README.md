@@ -16,7 +16,7 @@ cat << '_EOL_' > ~/.scrapyd.conf
 eggs_dir  = /home/ec2-user/scrapyd/eggs
 logs_dir  = /home/ec2-user/scrapyd/logs
 dbs_dir   = /home/ec2-user/scrapyd/dbs
-items_dir = /home/ec2-user/scrapyd/items
+items_dir = 
 jobs_to_keep = 1
 max_proc = 1
 max_proc_per_cpu = 1
@@ -50,7 +50,7 @@ systemctl --user enable --now scrapyd.service
 
 # deploy
 cd /opt/bokehro
-python3.13 scrapyd_setup.py sdist
+python3.13 setup.py sdist
 scrapyd-deploy
 
 # local execute
