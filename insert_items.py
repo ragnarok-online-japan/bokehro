@@ -1,9 +1,8 @@
 #!/usr/bin/env python3.13
 
 import argparse
+import json
 import re
-
-import pandas as pd
 
 from sql_app import models, crud, database
 models.Base.metadata.create_all(bind=database.Engine)
@@ -20,29 +19,27 @@ parser.add_argument('--import-items-json',
 args = parser.parse_args()
 
 def main(args: argparse.Namespace) -> None:
-    df = pd.read_json(args.import_items_json)
-
-    if df.empty:
-        print('No items to insert')
-        return
+    item_datas: dict = {}
+    with open(args.import_items_json, 'r') as file:
+        item_datas = json.load(file)
 
     pattern = re.compile(r".*\[([0-9]+)\]$")
 
     with database.SessionLocal() as session:
-        for row in df.iterrows():
+        for item in item_datas:
             slot: int|None = None
-            matches = pattern.match(row[1]['displayname'])
+            matches = pattern.match(item['displayname'])
             if matches:
                 slot = int(matches.group(1))
 
             item_data = models.ItemDataTable(
-                id=row[1]['id'],
-                displayname=row[1]['displayname'],
-                description=row[1]['description'],
+                id=item['id'],
+                displayname=item['displayname'],
+                description=item['description'],
                 slot_num=slot
             )
             # Check if the item already exists
-            existing_item = crud.get_item_data_from_id(session, row[1]['id'])
+            existing_item = crud.get_item_data_from_id(session, item['id'])
             if existing_item:
                 session.delete(existing_item)
             session.add(item_data)
