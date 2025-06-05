@@ -26,7 +26,7 @@ def main(args: argparse.Namespace) -> None:
     pattern = re.compile(r".*\[([0-9]+)\]$")
 
     with database.SessionLocal() as session:
-        for item in item_datas:
+        for item in item_datas.values():
             slot: int|None = None
             if "displayname" not in item or "id" not in item:
                 continue
