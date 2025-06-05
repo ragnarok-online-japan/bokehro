@@ -28,6 +28,8 @@ def main(args: argparse.Namespace) -> None:
     with database.SessionLocal() as session:
         for item in item_datas:
             slot: int|None = None
+            if "displayname" not in item or "id" not in item:
+                continue
             matches = pattern.match(item['displayname'])
             if matches:
                 slot = int(matches.group(1))
