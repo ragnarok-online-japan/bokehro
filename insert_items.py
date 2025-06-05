@@ -10,17 +10,17 @@ models.Base.metadata.create_all(bind=database.Engine)
 
 parser = argparse.ArgumentParser(description='')
 
-parser.add_argument('--import-items-jsonl',
+parser.add_argument('--import-items-json',
                     action='store',
                     nargs='?',
-                    default='./items.jsonl',
+                    default='./items.json',
                     type=str,
-                    help='import items.jsonl')
+                    help='import items.json')
 
 args = parser.parse_args()
 
-def main(args):
-    df = pd.read_json(args.import_items_jsonl, orient='records', lines=True)
+def main(args: argparse.Namespace) -> None:
+    df = pd.read_json(args.import_items_json)
 
     if df.empty:
         print('No items to insert')
