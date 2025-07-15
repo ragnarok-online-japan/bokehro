@@ -23,22 +23,17 @@ def main(args: argparse.Namespace) -> None:
     with open(args.import_items_json, 'r') as file:
         item_datas = json.load(file)
 
-    pattern = re.compile(r".*\[([0-9]+)\]$")
-
     with database.SessionLocal() as session:
         for item in item_datas.values():
-            slot: int|None = None
             if "displayname" not in item or "id" not in item:
                 continue
-            matches = pattern.match(item['displayname'])
-            if matches:
-                slot = int(matches.group(1))
 
             item_data = models.ItemDataTable(
                 id=item['id'],
                 displayname=item['displayname'],
                 description=item['description'],
-                slot_num=slot
+                slot_num=item["slot"],
+                type=item["type"]
             )
             # Check if the item already exists
             existing_item = crud.get_item_data_from_id(session, item['id'])
