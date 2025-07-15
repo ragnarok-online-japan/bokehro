@@ -25,15 +25,18 @@ def main(args: argparse.Namespace) -> None:
 
     with database.SessionLocal() as session:
         for item in item_datas.values():
+            slot: int|None = None
             if "displayname" not in item or "id" not in item:
                 continue
+
+            if "slot" in item:
+                slot=item["slot"]
 
             item_data = models.ItemDataTable(
                 id=item['id'],
                 displayname=item['displayname'],
                 description=item['description'],
-                slot_num=item["slot"],
-                type=item["type"]
+                slot_num=slot
             )
             # Check if the item already exists
             existing_item = crud.get_item_data_from_id(session, item['id'])
