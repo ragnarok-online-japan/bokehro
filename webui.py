@@ -256,6 +256,20 @@ async def bokehro_check(
         return JSONResponse(content=response_body, media_type="application/json", status_code=404)
 
     item_name = result_data.displayname
+    if result_data.slot_num is not None:
+        slot_num = int(result_data.slot_num)
+
+        find_highend = crud.get_item_data_from_displayname(
+            db=db,
+            displayname=item_name,
+            slot=(slot_num+1)
+        )
+        if find_highend is not None:
+            item_highend = {
+                "item_id": find_highend.id,
+                "item_name": f"{find_highend.displayname}[{find_highend.slot_num}]"
+            }
+
     response_body: dict = {
         "success" : True,
         "data" : {
@@ -265,7 +279,7 @@ async def bokehro_check(
         }
     }
 
-    response_body["export_img_url"] = f"https://rodb.aws.0nyx.net/assets/img/sorry_now_printing.jpg"
+    #response_body["export_img_url"] = f"https://rodb.aws.0nyx.net/assets/img/sorry_now_printing.jpg"
 
     return JSONResponse(content=response_body, media_type="application/json")
 
